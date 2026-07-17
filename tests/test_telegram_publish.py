@@ -7,7 +7,12 @@ from pathlib import Path
 SCRIPTS = Path(__file__).parents[1] / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
-from telegram_publish import build_summary, extract_headlines, publish_report
+from telegram_publish import (
+    build_summary,
+    discover_chat_ids,
+    extract_headlines,
+    publish_report,
+)
 
 
 def sample_report() -> dict:
@@ -91,6 +96,19 @@ class FakeClient:
     def send_document(self, chat_id, document_path, caption, disable_notification=True):
         self.documents.append((chat_id, document_path, caption, disable_notification))
         return {"message_id": 43}
+
+
+def test_discover_chat_ids_deduplicates_messages_and_channel_posts():
+    class UpdateClient:
+        @staticmethod
+        def get_updates():
+            return [
+                {"message": {"chat": {"id": 123}}},
+                {"message": {"chat": {"id": 123}}},
+                {"channel_post": {"chat": {"id": -100456}}},
+            ]
+
+    assert discover_chat_ids(UpdateClient()) == ["123", "-100456"]
 
 
 def test_publish_is_idempotent(tmp_path):

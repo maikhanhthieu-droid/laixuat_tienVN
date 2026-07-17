@@ -712,9 +712,10 @@ python3 scripts/run_pipeline.py \
 ```
 
 `scripts/telegram_publish.py` dùng Bot API bằng standard library, đọc
-`TELEGRAM_BOT_TOKEN` và `TELEGRAM_CHAT_ID(S)` từ environment, gửi summary +
-HTML và lưu fingerprint trong `.telegram_publish_state.json` để retry không
-gửi trùng. Không bao giờ commit token vào repo. Chạy
+`TELEGRAM_BOT_TOKEN` và tùy chọn `TELEGRAM_CHAT_ID(S)` từ environment, gửi
+summary + HTML và lưu fingerprint trong `.telegram_publish_state.json` để retry
+không gửi trùng. Nếu chat ID chưa cấu hình, publisher tự tìm chat duy nhất đã
+gửi `/start`. Không bao giờ commit token vào repo. Chạy
 `scripts/telegram_setup.py` sau khi nhắn `/start` cho bot để tìm chat ID.
 
 ## Pitfalls thực tế — Lessons Learned (BẮT BUỘC đọc trước khi edit)

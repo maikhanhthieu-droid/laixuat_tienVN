@@ -92,8 +92,7 @@ def check_deps(publish_telegram: bool = False) -> bool:
         if os.environ.get("TELEGRAM_CHAT_ID") or os.environ.get("TELEGRAM_CHAT_IDS"):
             print("  ✅ Telegram recipient: set")
         else:
-            print("  ❌ TELEGRAM_CHAT_ID/TELEGRAM_CHAT_IDS: not set")
-            all_ok = False
+            print("  ⚠️ Telegram recipient: auto-discover from /start update")
 
     return all_ok
 

@@ -56,7 +56,8 @@ Set-SecretFromPrompt `
 
 Set-SecretFromPrompt `
     -Name "TELEGRAM_CHAT_ID" `
-    -Prompt "Telegram chat ID (masked)"
+    -Prompt "Telegram chat ID (optional; press Enter for auto-discovery)" `
+    -Optional
 
 Set-SecretFromPrompt `
     -Name "FRED_API_KEY" `

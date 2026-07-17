@@ -299,7 +299,12 @@ class TelegramClient:
 
     def get_updates(self) -> list[dict[str, Any]]:
         result = self._json_request(
-            "getUpdates", {"limit": 100, "timeout": 0, "allowed_updates": ["message"]}
+            "getUpdates",
+            {
+                "limit": 100,
+                "timeout": 0,
+                "allowed_updates": ["message", "channel_post"],
+            },
         )
         updates = result.get("result", [])
         return updates if isinstance(updates, list) else []
@@ -356,6 +361,18 @@ def parse_chat_ids(explicit: list[str] | None = None) -> list[str]:
         raw = os.environ.get(env_name, "")
         candidates.extend(item.strip() for item in raw.split(",") if item.strip())
     return list(dict.fromkeys(candidates))
+
+
+def discover_chat_ids(client: TelegramClient) -> list[str]:
+    """Discover chat IDs from pending /start or channel updates."""
+    found: list[str] = []
+    for update in client.get_updates():
+        message = update.get("message") or update.get("channel_post") or {}
+        chat = message.get("chat") or {}
+        chat_id = chat.get("id")
+        if chat_id is not None:
+            found.append(str(chat_id))
+    return list(dict.fromkeys(found))
 
 
 def publish_report(
@@ -457,13 +474,35 @@ def main() -> int:
     token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
     if not token:
         parser.error("TELEGRAM_BOT_TOKEN is not set")
-    if not chat_ids:
-        parser.error("TELEGRAM_CHAT_ID or TELEGRAM_CHAT_IDS is not set")
-
     state_path = args.state_file or args.report.parent / ".telegram_publish_state.json"
+    client = TelegramClient(token)
+    if not chat_ids:
+        state = _load_state(state_path)
+        chat_ids = list(state.get("deliveries", {}).keys())
+    if not chat_ids:
+        try:
+            chat_ids = discover_chat_ids(client)
+        except TelegramError as exc:
+            print(f"Telegram chat discovery failed: {exc}", file=sys.stderr)
+            return 1
+    if not chat_ids:
+        print(
+            "No Telegram chat found. Send /start to the bot once, then rerun.",
+            file=sys.stderr,
+        )
+        return 1
+    if len(chat_ids) > 1 and not args.chat_ids and not os.environ.get(
+        "TELEGRAM_CHAT_ID"
+    ) and not os.environ.get("TELEGRAM_CHAT_IDS"):
+        print(
+            "Multiple Telegram chats found; set TELEGRAM_CHAT_ID explicitly.",
+            file=sys.stderr,
+        )
+        return 1
+
     try:
         statuses = publish_report(
-            TelegramClient(token),
+            client,
             args.report,
             chat_ids,
             html_path=args.html,

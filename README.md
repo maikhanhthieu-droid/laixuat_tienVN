@@ -185,10 +185,12 @@ Publisher có các đặc tính:
 - Dùng `.telegram_publish_state.json` để không gửi trùng cùng một báo cáo khi
   workflow được retry; dùng `--telegram-force` khi cần phát lại.
 - Có thể gửi nhiều nơi bằng `TELEGRAM_CHAT_IDS=id1,id2`.
+- Nếu không đặt `TELEGRAM_CHAT_ID`, publisher tự lấy chat duy nhất đã gửi
+  `/start` và ghi nhớ chat đó trong delivery state.
 
 Để chạy tự động trên GitHub Actions, tạo repository secrets
-`FRED_API_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` và tùy chọn
-`REPORT_URL`, sau đó bật workflow `Weekly VN rates → Telegram`. Script
+`TELEGRAM_BOT_TOKEN`; `FRED_API_KEY`, `TELEGRAM_CHAT_ID` và `REPORT_URL` là
+tùy chọn. Sau đó bật workflow `Weekly VN rates → Telegram`. Script
 `setup_github_secrets.ps1` nhập token bằng prompt masked và không ghi token vào
 mã nguồn, command line hay file.
 
