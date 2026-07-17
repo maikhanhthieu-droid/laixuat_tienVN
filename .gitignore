@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+sources_cache/
+*.pdf
+output/
+tmp/
+.env
+.telegram_publish_state.json
+qa-shots/

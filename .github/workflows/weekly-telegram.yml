@@ -1,0 +1,43 @@
+name: Weekly VN rates → Telegram
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Saturday 02:00 UTC = Saturday 09:00 Asia/Bangkok.
+    - cron: "0 2 * * 6"
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      TZ: Asia/Bangkok
+      FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      REPORT_URL: ${{ secrets.REPORT_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+
+      - name: Resolve last completed ISO week
+        id: week
+        shell: bash
+        run: echo "value=$(date -d '7 days ago' +%G-W%V)" >> "$GITHUB_OUTPUT"
+
+      - name: Run, audit and publish
+        run: |
+          python scripts/run_pipeline.py \
+            --week "${{ steps.week.outputs.value }}" \
+            --out ./output \
+            --publish-telegram
