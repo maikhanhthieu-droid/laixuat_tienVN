@@ -43,10 +43,12 @@ jobs:
       - name: Restore Telegram delivery state
         uses: actions/cache@v4
         with:
-          path: output/.telegram_publish_state.json
-          key: telegram-state-${{ github.ref_name }}-${{ github.run_number }}
+          path: |
+            output/.telegram_publish_state.json
+            output/sources_cache
+          key: weekly-state-${{ github.ref_name }}-${{ github.run_number }}
           restore-keys: |
-            telegram-state-${{ github.ref_name }}-
+            weekly-state-${{ github.ref_name }}-
 
       - name: Run, audit and publish
         run: |

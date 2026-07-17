@@ -335,11 +335,14 @@ def verify_report_v2(report_path: Path, cache_dir: Path, strict: bool = False) -
         truth = truth_fx.get("tm_mid")
         results.append(_make_result("fx_tm_mid", week_short, reported, truth, sbv_file.name, excerpt, strict))
 
-    # === 4. W26-only: yield curve 9 tenors from VBMA ===
-    vbma_w26_file = cache_dir / "vbma_W26.txt"
-    if vbma_w26_file.exists():
-        text = vbma_w26_file.read_text(encoding="utf-8", errors="ignore")
-        truth_yields_full = parse_vbma_yield_table(text)
+    # === 4. Latest week: yield curve 9 tenors from VBMA ===
+    # ``curve_w26`` is a legacy report key; its contents come from the latest
+    # week in the requested rolling window.
+    latest_week = weeks[-1]
+    latest_week_short = latest_week.split("-")[-1]
+    vbma_latest_file = cache_dir / f"vbma_{latest_week_short}.txt"
+    if vbma_latest_file.exists():
+        text = vbma_latest_file.read_text(encoding="utf-8", errors="ignore")
         # Parse full 9-tenor table — need extended parse
         from extract_cards import _find_vbma_yield_table as find_table
         from extract_cards import VBMA_TENOR_COLS
@@ -349,11 +352,19 @@ def verify_report_v2(report_path: Path, cache_dir: Path, strict: bool = False) -
         for tenor in VBMA_TENOR_COLS:
             truth = table_9.get(tenor)
             reported = curve_w26.get(tenor)
-            results.append(_make_result(f"curve_{tenor}", "W26", reported, truth, vbma_w26_file.name, excerpt, strict))
+            results.append(_make_result(
+                f"curve_{tenor}",
+                latest_week_short,
+                reported,
+                truth,
+                vbma_latest_file.name,
+                excerpt,
+                strict,
+            ))
 
-    # === 5. W26-only: auction from VBMA ===
+    # === 5. Latest week: auction from VBMA ===
     from extract_cards import parse_vbma_full
-    if vbma_w26_file.exists():
+    if vbma_latest_file.exists():
         vbma_full = parse_vbma_full(text)
         auction_w26 = report.get("sections", {}).get("lstp", {}).get("data_summary", {}).get("auction_w26", {})
         for tenor, truth_d in vbma_full.auction.items():
@@ -361,7 +372,15 @@ def verify_report_v2(report_path: Path, cache_dir: Path, strict: bool = False) -
             if rep_d:
                 truth_lstt = truth_d["lstt"]
                 rep_lstt = rep_d["lstt"]
-                results.append(_make_result(f"auction_{tenor}_lstt", "W26", rep_lstt, truth_lstt, vbma_w26_file.name, excerpt, strict))
+                results.append(_make_result(
+                    f"auction_{tenor}_lstt",
+                    latest_week_short,
+                    rep_lstt,
+                    truth_lstt,
+                    vbma_latest_file.name,
+                    excerpt,
+                    strict,
+                ))
 
     # === 6. Cross-check SBV vs VBMA LNH (4 weeks) ===
     for week in weeks:

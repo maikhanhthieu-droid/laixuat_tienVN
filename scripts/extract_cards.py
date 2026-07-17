@@ -196,6 +196,32 @@ def parse_sbv_interbank_real(text: str) -> dict[str, Optional[float]]:
         ]
         for index, key in enumerate(tenor_keys, start=1):
             values[key] = float(row.group(index).replace(",", "."))
+    else:
+        # Some SBV PDFs wrap the tenor row or append a footnote on the same
+        # extracted line. Anchor the fallback to the official table header,
+        # then require the first four VND tenors used by the weekly report.
+        header = re.search(
+            r"Qua đêm\s+1 tuần\s+2 tuần\s+1 tháng"
+            r"(?:\s+3 tháng\s*6 tháng\s+9 tháng)?",
+            text,
+            re.IGNORECASE,
+        )
+        if header:
+            after_header = text[header.end():header.end() + 800]
+            partial_row = re.search(
+                r"\bVND\s+"
+                + r"\s+".join([r"(\d{1,2}[.,]\d{1,4})"] * 4),
+                after_header,
+                re.IGNORECASE,
+            )
+            if partial_row:
+                for index, key in enumerate(
+                    ["overnight", "one_week", "two_week", "one_month"],
+                    start=1,
+                ):
+                    values[key] = float(
+                        partial_row.group(index).replace(",", ".")
+                    )
 
     fx_range = re.search(
         r"(?:cuối ngày|usd/vnd|thương mại|giao dịch)[^\n]{0,100}?"
