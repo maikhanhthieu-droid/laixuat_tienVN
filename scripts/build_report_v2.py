@@ -74,12 +74,17 @@ def generate_lnh_prose(sbv_data_4w: list[dict], vbma_data: dict, target_week: st
     on_now, on_then = on_values[-1], on_values[0]
     on_delta = on_now - on_then if (on_now and on_then) else None
     on_dir = "giảm" if (on_delta and on_delta < 0) else "tăng" if on_delta else "đi ngang"
+    on_connector = (
+        "lên" if on_delta and on_delta > 0
+        else "xuống" if on_delta and on_delta < 0
+        else "đến"
+    )
 
     # === Phân tích chi tiết ===
     overview = (
-        f"Trong 4 tuần trong 4 tuần qua, lãi suất liên ngân hàng (LNH) qua đêm (VND) {on_dir} "
-        f"từ {on_then}% xuống {on_now}% — biến động {fmt_bp(on_delta*100 if on_delta else 0)} "
-        f"trong kỳ. Đây là tín hiệu {('dovish — NHNN duy trì thanh khoản dồi dào' if on_delta and on_delta < 0 else 'hawkish nhẹ — thanh khoản căng hơn')}."
+        f"Trong 4 tuần qua, lãi suất liên ngân hàng (LNH) qua đêm (VND) {on_dir} "
+        f"từ {on_then}% {on_connector} {on_now}% — biến động {fmt_bp(on_delta*100 if on_delta else 0)} "
+        f"trong kỳ. Chỉ tiêu này phản ánh thay đổi chi phí vốn qua đêm; báo cáo không suy diễn nguyên nhân khi nguồn chưa công bố."
     )
 
     # === Tuần cuối chi tiết (VBMA có close + WoW bp) ===

@@ -109,6 +109,38 @@ def extract_headlines(
     }
 
 
+def extract_neutral_indicators(report: dict[str, Any]) -> list[str]:
+    """Derive formula-only indicators without policy or trading claims."""
+    sections = report.get("sections", {})
+    lnh = sections.get("lnh", {}).get("data_summary", {})
+    bonds = sections.get("lstp", {}).get("data_summary", {})
+    fx = sections.get("fx", {}).get("data_summary", {})
+    on_now, _ = _latest_and_first(lnh.get("on_4w", []))
+    m1_now, _ = _latest_and_first(lnh.get("m1_4w", []))
+    y2_now, _ = _latest_and_first(bonds.get("y2_4w", []))
+    y10_now, _ = _latest_and_first(bonds.get("y10_4w", []))
+    fx_values = [
+        float(item["value"])
+        for item in fx.get("fx_mid_4w", [])
+        if isinstance(item, dict) and isinstance(item.get("value"), (int, float))
+    ]
+    indicators = []
+    if on_now is not None and m1_now is not None:
+        indicators.append(
+            f"Chênh lệch LNH 1 tháng–ON: {_format_signed((m1_now - on_now) * 100)} đcb"
+        )
+    if y2_now is not None and y10_now is not None:
+        indicators.append(
+            f"Độ dốc TPCP 10Y–2Y: {_format_signed((y10_now - y2_now) * 100)} đcb"
+        )
+    if len(fx_values) >= 2:
+        fx_range_pct = (max(fx_values) - min(fx_values)) / fx_values[-1] * 100
+        indicators.append(
+            f"Biên độ USD/VND trong cửa sổ: {_format_decimal(fx_range_pct, 2)}%"
+        )
+    return indicators
+
+
 def _format_decimal(value: float, decimals: int = 2) -> str:
     rendered = f"{value:,.{decimals}f}"
     return rendered.replace(",", "\0").replace(".", ",").replace("\0", ".")
@@ -135,12 +167,11 @@ def build_summary(
     """Build a compact, deterministic Telegram HTML summary."""
     metrics = extract_headlines(report, chart_data=chart_data)
     period = report.get("period", {})
-    verdict = html.escape(str(report.get("verdict", "CHƯA XÁC ĐỊNH")))
 
     lines = [
         f"📊 <b>Lãi suất &amp; Tiền tệ Việt Nam — {html.escape(_week_label(report))}</b>",
         "",
-        f"🏷 <b>Trạng thái:</b> {verdict}",
+        "📌 <b>Ảnh chụp định lượng</b>",
     ]
     if metrics["lnh_now"] is not None:
         detail = f"{_format_decimal(metrics['lnh_now'])}%"
@@ -161,6 +192,8 @@ def build_summary(
         lines.append(f"🌐 <b>US 10Y:</b> {_format_decimal(metrics['us10y_now'])}%")
     if metrics["dxy_now"] is not None:
         lines.append(f"💵 <b>DXY proxy:</b> {_format_decimal(metrics['dxy_now'])}")
+    for indicator in extract_neutral_indicators(report):
+        lines.append(f"• {html.escape(indicator)}")
 
     cutoff = period.get("data_cutoff")
     if cutoff:
@@ -177,7 +210,7 @@ def build_summary(
     if scenario:
         lines.insert(
             max(len(lines) - 3, 0),
-            f"🔎 <b>Kịch bản 1–4 tuần:</b> {html.escape(str(scenario))}",
+            f"🔎 <b>Ngoại suy thống kê 1–4 tuần:</b> {html.escape(str(scenario))}",
         )
         confidence = analysis.get("confidence")
         if confidence:
@@ -398,7 +431,7 @@ def _detail_messages(report: dict[str, Any]) -> list[str]:
         lines.extend(
             [
                 "",
-                f"🔎 <b>Kịch bản cơ sở:</b> {html.escape(str(analysis.get('scenario', 'chưa đủ dữ liệu')))}",
+                f"🔎 <b>Ngoại suy thống kê:</b> {html.escape(str(analysis.get('scenario', 'chưa đủ dữ liệu')))}",
                 f"Độ tin cậy mô hình: {html.escape(str(analysis.get('confidence', 'thấp')))}",
             ]
         )

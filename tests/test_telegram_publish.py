@@ -11,6 +11,7 @@ from telegram_publish import (
     build_summary,
     discover_chat_ids,
     extract_headlines,
+    extract_neutral_indicators,
     publish_report,
 )
 
@@ -87,12 +88,26 @@ def test_summary_uses_verified_json_values():
 def test_summary_includes_model_scenario_when_present():
     report = sample_report()
     report["analysis"] = {
-        "scenario": "Căng ngắn hạn; dài hạn chưa xác nhận",
+        "scenario": "LNH tăng; LSTP dài hạn chưa xác nhận",
         "confidence": "trung bình",
     }
     summary = build_summary(report)
-    assert "Kịch bản 1–4 tuần" in summary
+    assert "Ngoại suy thống kê 1–4 tuần" in summary
     assert "trung bình" in summary
+
+
+def test_neutral_indicators_are_formula_only():
+    report = sample_report()
+    report["sections"]["lnh"]["data_summary"]["m1_4w"] = [
+        {"week": "W28", "value": 7.32}
+    ]
+    report["sections"]["lstp"]["data_summary"]["y2_4w"] = [
+        {"week": "W28", "value": 3.50}
+    ]
+    indicators = extract_neutral_indicators(report)
+    assert any("1 tháng–ON" in item for item in indicators)
+    assert any("10Y–2Y" in item for item in indicators)
+    assert any("Biên độ USD/VND" in item for item in indicators)
 
 
 class FakeClient:
@@ -158,7 +173,7 @@ def test_publish_without_document_sends_details_as_messages(tmp_path):
     report_path = tmp_path / "report.json"
     report = sample_report()
     report["analysis"] = {
-        "scenario": "Căng ngắn hạn; dài hạn chưa xác nhận",
+        "scenario": "LNH tăng; LSTP dài hạn chưa xác nhận",
         "confidence": "trung bình",
         "metrics": [],
     }

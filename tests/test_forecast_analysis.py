@@ -45,7 +45,7 @@ def test_forecast_returns_point_and_band_for_verified_series():
         }
     }
     result = build_forecast(report)
-    assert result["scenario"] == "Căng ngắn hạn; dài hạn chưa xác nhận"
+    assert result["scenario"] == "LNH tăng; LSTP dài hạn chưa xác nhận"
     lnh = next(item for item in result["metrics"] if item["key"] == "lnh_overnight")
     assert lnh["status"] == "ok"
     assert lnh["forecasts"]["4w"]["point"] > lnh["latest"]

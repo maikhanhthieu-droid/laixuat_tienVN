@@ -154,15 +154,15 @@ def build_forecast(report: dict[str, Any]) -> dict[str, Any]:
     lnh_signal = valid.get("lnh_overnight", {}).get("signal")
     y10_signal = valid.get("lstp_10y", {}).get("signal")
     if lnh_signal == "tăng" and y10_signal == "tăng":
-        scenario = "Căng hơn ở cả ngắn và dài hạn"
+        scenario = "LNH và LSTP cùng có động lượng tăng"
     elif lnh_signal == "tăng" and y10_signal in {"giảm", "đi ngang"}:
-        scenario = "Căng ngắn hạn; dài hạn chưa xác nhận"
+        scenario = "LNH tăng; LSTP dài hạn chưa xác nhận"
     elif lnh_signal == "giảm" and y10_signal == "tăng":
-        scenario = "LNH hạ nhiệt; lợi suất dài hạn còn cao"
+        scenario = "LNH giảm trong khi LSTP dài hạn tăng"
     elif lnh_signal == "giảm" and y10_signal == "giảm":
-        scenario = "Hạ nhiệt ở cả hai đầu"
+        scenario = "LNH và LSTP cùng có động lượng giảm"
     else:
-        scenario = "Động lượng hỗn hợp hoặc thiếu dữ liệu"
+        scenario = "Các chuỗi đi ngang, phân kỳ hoặc chưa đủ dữ liệu"
     confidences = [
         item["confidence"] for item in metrics if item.get("status") == "ok"
     ]
