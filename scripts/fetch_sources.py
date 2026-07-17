@@ -372,6 +372,9 @@ def fetch_vnba_by_weeks(out_dir: Path, target_weeks: list) -> dict:
     if remaining:
         print(f"  ⚠️ VNBA not found: {[tw.split('-')[-1] for tw in remaining]}")
     return results
+
+
+def fetch_vnba_recent(out_dir: Path, count: int = 4) -> dict:
     """Fetch N most-recent VNBA weekly bulletins.
 
     Strategy: VNBA không có category page. Thay vào đó:
@@ -511,6 +514,11 @@ def main():
     parser.add_argument("--week", required=True, help="Target ISO week, e.g. 2026-W26")
     parser.add_argument("--out", required=True, help="Output directory")
     parser.add_argument("--upstream-only", action="store_true")
+    parser.add_argument(
+        "--sbv-only",
+        action="store_true",
+        help="Fetch only the exact SBV week (used by the rolling-cache pipeline)",
+    )
     args = parser.parse_args()
 
     out_dir = Path(args.out)
@@ -518,6 +526,8 @@ def main():
 
     if not args.upstream_only:
         weeks = enumerate_4_weeks(args.week)
+        if args.sbv_only:
+            weeks = [week for week in weeks if week.iso_week == args.week]
         print(f"Enumerated weeks: {[w.iso_week for w in weeks]}")
         for w in weeks:
             try:
@@ -526,18 +536,21 @@ def main():
             except Exception as e:
                 status = f"ERROR: {e}"
             print(f"  SBV {w.iso_week}: {status}")
-        try:
-            vbma = fetch_vbma_recent(out_dir)
-            print(f"  VBMA: fetched {len(vbma)} PDFs")
-        except Exception as e:
-            print(f"  VBMA: ERROR: {e}")
-        try:
-            vnba = fetch_vnba_recent(out_dir)
-            print(f"  VNBA: fetched {len(vnba)} PDFs")
-        except Exception as e:
-            print(f"  VNBA: ERROR: {e}")
+        if not args.sbv_only:
+            try:
+                vbma = fetch_vbma_recent(out_dir)
+                print(f"  VBMA: fetched {len(vbma)} PDFs")
+            except Exception as e:
+                print(f"  VBMA: ERROR: {e}")
+            try:
+                vnba = fetch_vnba_recent(out_dir)
+                print(f"  VNBA: fetched {len(vnba)} PDFs")
+            except Exception as e:
+                print(f"  VNBA: ERROR: {e}")
 
     # Upstream (always attempt, gracefully skip if no key)
+    if args.sbv_only:
+        return
     fred_10y = fetch_fred_series("DGS10", weeks=12)
     print(f"  FRED DGS10: {len(fred_10y)} observations")
     fred_dxy = fetch_fred_series("DTWEXBGS", weeks=12)

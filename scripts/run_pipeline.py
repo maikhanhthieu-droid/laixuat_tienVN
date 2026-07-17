@@ -52,8 +52,15 @@ def run(cmd: list[str], desc: str) -> bool:
         return False
     if result.returncode != 0:
         print(f"  ❌ {desc} FAILED (exit {result.returncode})")
+        if result.stdout:
+            lines = result.stdout.rstrip().splitlines()
+            print("     --- subprocess output (last 80 lines) ---")
+            for line in lines[-80:]:
+                print(f"     {line}")
         if result.stderr:
-            print(f"     {result.stderr[:300]}")
+            print("     --- subprocess error ---")
+            for line in result.stderr.rstrip().splitlines()[-30:]:
+                print(f"     {line}")
         return False
     if result.stdout:
         # Print last 3 lines
@@ -176,7 +183,15 @@ def fetch_pdfs(week: str, cache_dir: Path) -> bool:
             if not (cache_dir / f"sbv_{w}.txt").exists():
                 print(f"\n  → SBV {w}...")
                 ok = run(
-                    [sys.executable, str(SCRIPTS_DIR / "fetch_sources.py"), "--week", w, "--out", str(cache_dir)],
+                    [
+                        sys.executable,
+                        str(SCRIPTS_DIR / "fetch_sources.py"),
+                        "--week",
+                        w,
+                        "--out",
+                        str(cache_dir),
+                        "--sbv-only",
+                    ],
                     f"SBV {w}"
                 )
                 if not ok:
