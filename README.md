@@ -193,8 +193,8 @@ Publisher có các đặc tính:
 
 - Đọc token từ `TELEGRAM_BOT_TOKEN`, không nhận token trên command line và
   không ghi token vào log.
-- Gửi một tin nhắn tóm tắt, nút mở dashboard (nếu có `REPORT_URL`) và file
-  HTML đầy đủ.
+- Gửi một tin nhắn tóm tắt và phần phân tích chi tiết trực tiếp trong Telegram;
+  workflow production không đính kèm file HTML.
 - Dùng `.telegram_publish_state.json` để không gửi trùng cùng một báo cáo khi
   workflow được retry; dùng `--telegram-force` khi cần phát lại.
 - Có thể gửi nhiều nơi bằng `TELEGRAM_CHAT_IDS=id1,id2`.

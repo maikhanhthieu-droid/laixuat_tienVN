@@ -55,4 +55,5 @@ jobs:
           python scripts/run_pipeline.py \
             --week "${{ steps.week.outputs.value }}" \
             --out ./output \
-            --publish-telegram
+            --publish-telegram \
+            --telegram-no-document

@@ -152,3 +152,32 @@ def test_publish_is_idempotent(tmp_path):
     assert len(client.messages) == 1
     assert len(client.documents) == 1
     assert state_path.exists()
+
+
+def test_publish_without_document_sends_details_as_messages(tmp_path):
+    report_path = tmp_path / "report.json"
+    report = sample_report()
+    report["analysis"] = {
+        "scenario": "Căng ngắn hạn; dài hạn chưa xác nhận",
+        "confidence": "trung bình",
+        "metrics": [],
+    }
+    report["sections"]["lnh"]["overview"] = "LNH tăng theo chuỗi số liệu đã kiểm chứng."
+    report_path.write_text(json.dumps(report, ensure_ascii=False), encoding="utf-8")
+    html_path = tmp_path / "report.html"
+    html_path.write_text("<html>should not be sent</html>", encoding="utf-8")
+    client = FakeClient()
+
+    statuses = publish_report(
+        client,
+        report_path,
+        ["123"],
+        html_path=html_path,
+        state_path=tmp_path / "state.json",
+        attach_document=False,
+    )
+
+    assert statuses == {"123": "published"}
+    assert len(client.documents) == 0
+    assert len(client.messages) >= 2
+    assert any("Phân tích chi tiết" in item[1] for item in client.messages)

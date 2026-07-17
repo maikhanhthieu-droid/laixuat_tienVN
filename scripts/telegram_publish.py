@@ -355,6 +355,7 @@ def report_fingerprint(
     html_path: Path | None,
     chart_data_path: Path | None,
     report_url: str | None,
+    attach_document: bool = True,
 ) -> str:
     digest = hashlib.sha256()
     digest.update(report_path.read_bytes())
@@ -363,6 +364,7 @@ def report_fingerprint(
     if chart_data_path and chart_data_path.exists():
         digest.update(chart_data_path.read_bytes())
     digest.update((report_url or "").encode("utf-8"))
+    digest.update(f"attach_document={attach_document}".encode("utf-8"))
     return digest.hexdigest()
 
 
@@ -388,6 +390,84 @@ def discover_chat_ids(client: TelegramClient) -> list[str]:
     return list(dict.fromkeys(found))
 
 
+def _detail_messages(report: dict[str, Any]) -> list[str]:
+    """Render the report body as Telegram-safe text messages."""
+    lines = ["📚 <b>Phân tích chi tiết</b>"]
+    analysis = report.get("analysis", {})
+    if isinstance(analysis, dict):
+        lines.extend(
+            [
+                "",
+                f"🔎 <b>Kịch bản cơ sở:</b> {html.escape(str(analysis.get('scenario', 'chưa đủ dữ liệu')))}",
+                f"Độ tin cậy mô hình: {html.escape(str(analysis.get('confidence', 'thấp')))}",
+            ]
+        )
+        for metric in analysis.get("metrics", []):
+            if not isinstance(metric, dict) or metric.get("status") != "ok":
+                continue
+            four_week = metric.get("forecasts", {}).get("4w", {})
+            unit = str(metric.get("unit", ""))
+            suffix = f" {unit}" if unit else ""
+            lines.append(
+                f"• <b>{html.escape(str(metric.get('label')))}:</b> "
+                f"{html.escape(str(metric.get('signal')))}; "
+                f"4 tuần {html.escape(str(four_week.get('low')))}–"
+                f"{html.escape(str(four_week.get('high')))}{html.escape(suffix)} "
+                f"(tin cậy {html.escape(str(metric.get('confidence')))})"
+            )
+
+    section_labels = {
+        "lnh": "LNH & OMO",
+        "lstp": "Trái phiếu Chính phủ",
+        "fx": "Tỷ giá & Ngoại hối",
+        "global": "Bối cảnh toàn cầu",
+        "vn": "Bối cảnh Việt Nam",
+    }
+    preferred = [
+        "overview",
+        "w26_detail",
+        "volume_note",
+        "auction_text",
+        "secondary_text",
+        "pairs_text",
+        "cb_text",
+        "govy_text",
+        "eq_text",
+        "comm_text",
+        "bank_text",
+        "gold_text",
+        "cpi_text",
+    ]
+    for key, label in section_labels.items():
+        section = report.get("sections", {}).get(key, {})
+        if not isinstance(section, dict):
+            continue
+        values = [
+            str(section[field]).strip()
+            for field in preferred
+            if isinstance(section.get(field), str) and section[field].strip()
+        ]
+        if not values:
+            continue
+        lines.extend(["", f"<b>{html.escape(label)}</b>"])
+        lines.extend(html.escape(value) for value in values)
+
+    # Split on line boundaries so Telegram never rejects a long report.
+    chunks: list[str] = []
+    current = ""
+    max_length = TELEGRAM_TEXT_LIMIT - 150
+    for line in lines:
+        candidate = f"{current}\n{line}" if current else line
+        if current and len(candidate) > max_length:
+            chunks.append(current)
+            current = line
+        else:
+            current = candidate
+    if current:
+        chunks.append(current)
+    return chunks
+
+
 def publish_report(
     client: TelegramClient,
     report_path: Path,
@@ -407,7 +487,7 @@ def publish_report(
         chart_data = json.loads(chart_data_path.read_text(encoding="utf-8"))
     summary = build_summary(report, chart_data=chart_data)
     fingerprint = report_fingerprint(
-        report_path, html_path, chart_data_path, report_url
+        report_path, html_path, chart_data_path, report_url, attach_document
     )
     state = _load_state(state_path) if state_path else {"deliveries": {}}
     deliveries = state.setdefault("deliveries", {})
@@ -431,6 +511,13 @@ def publish_report(
                 html_path,
                 caption=f"📎 Báo cáo đầy đủ — {html.escape(_week_label(report))}",
             )
+        elif not attach_document:
+            for detail in _detail_messages(report):
+                client.send_message(
+                    chat_id,
+                    detail,
+                    disable_notification=disable_notification,
+                )
 
         deliveries[chat_id] = {
             "fingerprint": fingerprint,
