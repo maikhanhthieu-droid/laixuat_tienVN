@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import sys
+from getpass import getpass
 from pathlib import Path
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -17,7 +18,9 @@ from telegram_publish import TelegramClient, TelegramError
 def main() -> int:
     token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
     if not token:
-        print("TELEGRAM_BOT_TOKEN is not set.", file=sys.stderr)
+        token = getpass("Telegram bot token (input hidden): ").strip()
+    if not token:
+        print("Telegram bot token is required.", file=sys.stderr)
         return 2
     try:
         updates = TelegramClient(token).get_updates()

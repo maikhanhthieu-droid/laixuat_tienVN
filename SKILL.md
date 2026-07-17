@@ -694,6 +694,7 @@ vn-research-dashboard       (render HTML equity research — share _viz-shared/)
 - **`scripts/render_report.py`** — render HTML data-driven từ `report.json` (không hard-code tuần)
 - **`scripts/telegram_publish.py`** — publish summary + HTML + dashboard link, có de-dup
 - **`scripts/telegram_setup.py`** — đọc updates để tìm chat ID
+- **`scripts/setup_github_secrets.ps1`** — nhập token masked và lưu vào GitHub Secrets
 - **`scripts/qa_weekly.js`** — Playwright QA (visual checks)
 - **`tests/`** — pytest suite covering parsers, renderer, Telegram formatting and pipeline helpers
 - **`audit_report.md`** (output) — báo cáo tường minh audit sau mỗi lần chạy
