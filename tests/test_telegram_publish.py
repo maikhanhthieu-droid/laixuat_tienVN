@@ -58,17 +58,24 @@ def sample_report() -> dict:
 
 def test_summary_uses_verified_json_values():
     report = sample_report()
-    metrics = extract_headlines(report)
+    chart_data = {
+        "us_10y": [{"date": "2026-07-10", "value": 4.37}],
+        "dxy": [{"date": "2026-07-10", "value": 101.4}],
+    }
+    metrics = extract_headlines(report, chart_data=chart_data)
     assert metrics["lnh_now"] == 5.21
     assert round(metrics["lnh_delta_bp"]) == 131
     assert round(metrics["y10_delta_bp"]) == 3
+    assert metrics["us10y_now"] == 4.37
 
-    summary = build_summary(report)
+    summary = build_summary(report, chart_data=chart_data)
     assert "Tuần 28/2026" in summary
     assert "5,21%" in summary
     assert "+131 đcb" in summary
     assert "4,40%" in summary
     assert "26.268" in summary
+    assert "US 10Y" in summary
+    assert "DXY proxy" in summary
     assert len(summary) <= 4096
 
 

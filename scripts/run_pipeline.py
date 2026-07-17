@@ -262,11 +262,18 @@ def render_html(out_dir: Path) -> bool:
     html_path = out_dir / "report.html"
 
     # Data-driven renderer: contains no week-specific hard-coded values.
-    return run(
-        [sys.executable, str(SCRIPTS_DIR / "render_report.py"),
-         "--report", str(report_path), "--out", str(html_path)],
-        "Render data-driven HTML"
-    )
+    cmd = [
+        sys.executable,
+        str(SCRIPTS_DIR / "render_report.py"),
+        "--report",
+        str(report_path),
+        "--out",
+        str(html_path),
+    ]
+    chart_data_path = out_dir / "chart_data.json"
+    if chart_data_path.exists():
+        cmd.extend(["--chart-data", str(chart_data_path)])
+    return run(cmd, "Render data-driven HTML")
 
 
 def audit_gates(html_path: Path) -> bool:
@@ -295,6 +302,9 @@ def publish_telegram(
         "--html",
         str(out_dir / "report.html"),
     ]
+    chart_data_path = out_dir / "chart_data.json"
+    if chart_data_path.exists():
+        cmd.extend(["--chart-data", str(chart_data_path)])
     if report_url:
         cmd.extend(["--report-url", report_url])
     if no_document:

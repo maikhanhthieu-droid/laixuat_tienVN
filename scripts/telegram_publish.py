@@ -49,7 +49,9 @@ def _legacy_series(report: dict[str, Any], group: str, key: str) -> list[dict[st
     return values if isinstance(values, list) else []
 
 
-def extract_headlines(report: dict[str, Any]) -> dict[str, float | None]:
+def extract_headlines(
+    report: dict[str, Any], chart_data: dict[str, Any] | None = None
+) -> dict[str, float | None]:
     """Extract headline metrics from both current and legacy report schemas."""
     sections = report.get("sections", {})
     if sections:
@@ -64,6 +66,25 @@ def extract_headlines(report: dict[str, Any]) -> dict[str, float | None]:
     lnh_now, lnh_then = _latest_and_first(lnh)
     y10_now, y10_then = _latest_and_first(y10)
     fx_now, fx_then = _latest_and_first(fx)
+    chart_data = chart_data or {}
+    us10y = chart_data.get("us_10y", [])
+    dxy = chart_data.get("dxy", [])
+    us10y_now = next(
+        (
+            row.get("value")
+            for row in reversed(us10y)
+            if isinstance(row, dict) and isinstance(row.get("value"), (int, float))
+        ),
+        None,
+    ) if isinstance(us10y, list) else None
+    dxy_now = next(
+        (
+            row.get("value")
+            for row in reversed(dxy)
+            if isinstance(row, dict) and isinstance(row.get("value"), (int, float))
+        ),
+        None,
+    ) if isinstance(dxy, list) else None
     return {
         "lnh_now": lnh_now,
         "lnh_delta_bp": (
@@ -83,6 +104,8 @@ def extract_headlines(report: dict[str, Any]) -> dict[str, float | None]:
             if fx_now is not None and fx_then not in (None, 0)
             else None
         ),
+        "us10y_now": float(us10y_now) if us10y_now is not None else None,
+        "dxy_now": float(dxy_now) if dxy_now is not None else None,
     }
 
 
@@ -106,9 +129,11 @@ def _week_label(report: dict[str, Any]) -> str:
     return report_id.replace("vn-rates-", "")
 
 
-def build_summary(report: dict[str, Any]) -> str:
+def build_summary(
+    report: dict[str, Any], chart_data: dict[str, Any] | None = None
+) -> str:
     """Build a compact, deterministic Telegram HTML summary."""
-    metrics = extract_headlines(report)
+    metrics = extract_headlines(report, chart_data=chart_data)
     period = report.get("period", {})
     verdict = html.escape(str(report.get("verdict", "CHƯA XÁC ĐỊNH")))
 
@@ -132,6 +157,10 @@ def build_summary(report: dict[str, Any]) -> str:
         if metrics["fx_delta_pct"] is not None:
             detail += f" ({_format_signed(metrics['fx_delta_pct'], 2)}%/4 tuần)"
         lines.append(f"💱 <b>USD/VND:</b> {detail}")
+    if metrics["us10y_now"] is not None:
+        lines.append(f"🌐 <b>US 10Y:</b> {_format_decimal(metrics['us10y_now'])}%")
+    if metrics["dxy_now"] is not None:
+        lines.append(f"💵 <b>DXY proxy:</b> {_format_decimal(metrics['dxy_now'])}")
 
     cutoff = period.get("data_cutoff")
     if cutoff:
@@ -304,12 +333,17 @@ def _save_state(path: Path, state: dict[str, Any]) -> None:
 
 
 def report_fingerprint(
-    report_path: Path, html_path: Path | None, report_url: str | None
+    report_path: Path,
+    html_path: Path | None,
+    chart_data_path: Path | None,
+    report_url: str | None,
 ) -> str:
     digest = hashlib.sha256()
     digest.update(report_path.read_bytes())
     if html_path and html_path.exists():
         digest.update(html_path.read_bytes())
+    if chart_data_path and chart_data_path.exists():
+        digest.update(chart_data_path.read_bytes())
     digest.update((report_url or "").encode("utf-8"))
     return digest.hexdigest()
 
@@ -329,6 +363,7 @@ def publish_report(
     report_path: Path,
     chat_ids: list[str],
     html_path: Path | None = None,
+    chart_data_path: Path | None = None,
     report_url: str | None = None,
     state_path: Path | None = None,
     force: bool = False,
@@ -337,8 +372,13 @@ def publish_report(
 ) -> dict[str, str]:
     """Publish to all chats and return a per-chat delivery status."""
     report = json.loads(report_path.read_text(encoding="utf-8"))
-    summary = build_summary(report)
-    fingerprint = report_fingerprint(report_path, html_path, report_url)
+    chart_data = None
+    if chart_data_path and chart_data_path.exists():
+        chart_data = json.loads(chart_data_path.read_text(encoding="utf-8"))
+    summary = build_summary(report, chart_data=chart_data)
+    fingerprint = report_fingerprint(
+        report_path, html_path, chart_data_path, report_url
+    )
     state = _load_state(state_path) if state_path else {"deliveries": {}}
     deliveries = state.setdefault("deliveries", {})
     statuses: dict[str, str] = {}
@@ -381,6 +421,7 @@ def main() -> int:
     )
     parser.add_argument("--report", required=True, type=Path)
     parser.add_argument("--html", type=Path)
+    parser.add_argument("--chart-data", type=Path)
     parser.add_argument("--report-url", default=os.environ.get("REPORT_URL"))
     parser.add_argument("--chat-id", action="append", dest="chat_ids")
     parser.add_argument("--state-file", type=Path)
@@ -398,11 +439,18 @@ def main() -> int:
         parser.error(f"report file not found: {args.report}")
     if args.html and not args.html.exists():
         parser.error(f"HTML file not found: {args.html}")
+    if args.chart_data and not args.chart_data.exists():
+        parser.error(f"chart data file not found: {args.chart_data}")
 
     report = json.loads(args.report.read_text(encoding="utf-8"))
+    chart_data = (
+        json.loads(args.chart_data.read_text(encoding="utf-8"))
+        if args.chart_data
+        else None
+    )
     chat_ids = parse_chat_ids(args.chat_ids)
     if args.dry_run:
-        print(build_summary(report))
+        print(build_summary(report, chart_data=chart_data))
         print(f"\nRecipients: {', '.join(chat_ids) if chat_ids else '(not configured)'}")
         return 0
 
@@ -419,6 +467,7 @@ def main() -> int:
             args.report,
             chat_ids,
             html_path=args.html,
+            chart_data_path=args.chart_data,
             report_url=args.report_url,
             state_path=state_path,
             force=args.force,

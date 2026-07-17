@@ -308,11 +308,12 @@ Sau khi inject charts (Bước 6), BẮT BUỘC thêm hint cho mỗi chart:
 
 ### BƯỚC 4: RENDER DATA-DRIVEN
 
-Pipeline dùng `scripts/render_report.py --report report.json --out report.html`.
+Pipeline dùng `scripts/render_report.py --report report.json --chart-data chart_data.json --out report.html`.
 Renderer này không chứa số liệu hard-code của một tuần cụ thể: narrative, cutoff,
-verdict và chart series đều lấy từ `report.json`. Hiện tại renderer portable tạo
-ba chart chính (LNH, lợi suất 2Y/5Y/10Y và USD/VND); các chart upstream khác có
-thể bổ sung bằng cách thêm series vào `build_chart_configs`.
+verdict và chart series đều lấy từ `report.json` cùng `chart_data.json`. Khi HNX
+và FRED trả dữ liệu, output có 9 chart: LNH, VBMA yield curve, HNX yield curve,
+auction, slope, convexity, USD/VND, US 10Y và DXY. Nếu upstream bị gián đoạn,
+renderer tự bỏ qua chart thiếu thay vì bịa dữ liệu.
 
 **Quy trình render**:
 
@@ -326,7 +327,7 @@ thể bổ sung bằng cách thêm series vào `build_chart_configs`.
 
 | Metric | Minimum | W26 chuẩn |
 |---|---|---|
-| **Charts** | 3 data-driven | 3 |
+| **Charts** | 9 khi upstream đầy đủ | 9 |
 | **Section balance** | 0 lệch thẻ | 0 |
 | **Hard-coded week values** | 0 | 0 |
 | **Audit gates** | 4/4 PASS | 4/4 |
@@ -563,16 +564,14 @@ python3 scripts/verify_data.py --report report.json --cache sources_cache/
 # Render
 python3 scripts/render_report.py \
   --report report.json \
-  --template assets/weekly_template.html \
+  --chart-data chart_data.json \
   --out report.html
 
-# QA quadruple-gate (BẮT BUỘC — cả 4 phải PASS)
-# Gate 1: JS syntax
-python3 -c "import re; html=open('report.html').read(); s=re.findall(r'<script>(.*?)</script>',html,re.DOTALL); open('/tmp/r.js','w').write(s[-1])"
-node --check /tmp/r.js && echo "✅ JS OK"
-
-# Gate 2: Data verification (lặp lại từ Bước 3.5)
+# Data verification (lặp lại từ Bước 3.5)
 python3 scripts/verify_data.py --report report.json --cache sources_cache/
+
+# HTML structure, JS syntax, banned words and operational metadata
+python3 scripts/audit_gate.py --html report.html
 
 # Gate 3: Visual QA (Playwright)
 NODE_PATH=/tmp/qa-weekly-runner/node_modules node scripts/qa_weekly.js \
@@ -690,17 +689,13 @@ vn-research-dashboard       (render HTML equity research — share _viz-shared/)
 - **`assets/weekly_template.html`** — ⭐ HTML template (self-contained, không cần inject.py)
 - **`scripts/fetch_sources.py`** — fetch 12 PDFs + FRED/vnstock upstream
 - **`scripts/extract_cards.py`** — parse PDF text → `values[]` 4-week + cross-check
-- **`scripts/build_report.py`** — assemble report.json từ 4 tuần cache
-- **`scripts/build_report_v3.py`** — build report v3 với narrative depth (NARRATIVE_* constants)
-- **`scripts/build_report_v4.py`** — build report v4 hybrid (verbatim + synthesis)
-- **`scripts/prose_extractor.py`** — trích 66+ đoạn prose theo topic từ 3 PDF
-- **`scripts/hybrid_prose.py`** — trích verbatim dài + ghép với narrative_v2 theo section
+- **`scripts/build_report_v2.py`** — assemble report.json từ 4 tuần cache
 - **`scripts/verify_data.py`** — ⭐ **BẮT BUỘC** — re-parse độc lập + đối chiếu report.json vs source (45 điểm)
 - **`scripts/render_report.py`** — render HTML data-driven từ `report.json` (không hard-code tuần)
-- **`scripts/render_history.py`** — render report history-telling (4 tuần tabs — hạ tầng kỹ thuật, không show user)
-- **`scripts/render_report.py`** — fill template v1 từ report.json
+- **`scripts/telegram_publish.py`** — publish summary + HTML + dashboard link, có de-dup
+- **`scripts/telegram_setup.py`** — đọc updates để tìm chat ID
 - **`scripts/qa_weekly.js`** — Playwright QA (visual checks)
-- **`tests/test_extract_cards.py`** — pytest 20 tests (9 parsers + 11 verify)
+- **`tests/`** — pytest suite covering parsers, renderer, Telegram formatting and pipeline helpers
 - **`audit_report.md`** (output) — báo cáo tường minh audit sau mỗi lần chạy
 
 ## Telegram publish (tuỳ chọn)

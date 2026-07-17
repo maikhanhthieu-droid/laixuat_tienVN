@@ -40,6 +40,14 @@ jobs:
         shell: bash
         run: echo "value=$(date -d '7 days ago' +%G-W%V)" >> "$GITHUB_OUTPUT"
 
+      - name: Restore Telegram delivery state
+        uses: actions/cache@v4
+        with:
+          path: output/.telegram_publish_state.json
+          key: telegram-state-${{ github.ref_name }}-${{ github.run_number }}
+          restore-keys: |
+            telegram-state-${{ github.ref_name }}-
+
       - name: Run, audit and publish
         run: |
           python scripts/run_pipeline.py \

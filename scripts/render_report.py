@@ -62,7 +62,110 @@ def _series(
     return labels, values
 
 
-def build_chart_configs(report: dict[str, Any]) -> list[dict[str, Any]]:
+def _date_label(value: Any) -> str:
+    raw = str(value)
+    if len(raw) >= 10 and raw[4] == "-" and raw[7] == "-":
+        return f"{raw[8:10]}/{raw[5:7]}"
+    return raw
+
+
+def _grouped_series(
+    rows: Any,
+    group_key: str,
+    value_key: str,
+) -> tuple[list[str], dict[str, list[float | None]]]:
+    """Turn flat upstream rows into aligned chart series."""
+    if not isinstance(rows, list):
+        return [], {}
+    dates = sorted(
+        {
+            str(row.get("date"))
+            for row in rows
+            if isinstance(row, dict) and row.get("date")
+        }
+    )
+    groups = sorted(
+        {
+            str(row.get(group_key))
+            for row in rows
+            if isinstance(row, dict) and row.get(group_key) is not None
+        }
+    )
+    by_key = {
+        (str(row.get("date")), str(row.get(group_key))): row.get(value_key)
+        for row in rows
+        if isinstance(row, dict)
+    }
+    data: dict[str, list[float | None]] = {}
+    for group in groups:
+        data[group] = [
+            (
+                float(by_key[(date, group)])
+                if isinstance(by_key.get((date, group)), (int, float))
+                else None
+            )
+            for date in dates
+        ]
+    return [_date_label(date) for date in dates], data
+
+
+def _hint(
+    meaning: str,
+    labels: list[str],
+    datasets: list[dict[str, Any]],
+    unit: str = "%",
+) -> str:
+    numeric = [
+        float(value)
+        for dataset in datasets
+        for value in dataset.get("data", [])
+        if isinstance(value, (int, float))
+    ]
+    if not numeric:
+        return f"Ý nghĩa: {meaning} Chưa có quan sát upstream để đọc giá trị hiện tại."
+    latest = next(
+        (
+            value
+            for dataset in reversed(datasets)
+            for value in reversed(dataset.get("data", []))
+            if isinstance(value, (int, float))
+        ),
+        None,
+    )
+    current = f"{latest:.2f}{unit}" if isinstance(latest, (int, float)) else "chưa có"
+    low, high = min(numeric), max(numeric)
+    return (
+        f"Ý nghĩa: {meaning} "
+        f"Giá trị gần nhất: <strong>{current}</strong>. "
+        f"Khoảng quan sát: {low:.2f}{unit}–{high:.2f}{unit}; "
+        f"biên độ này là điểm cần đối chiếu với các kỳ trước."
+    )
+
+
+def _chart(
+    chart_id: str,
+    section: str,
+    title: str,
+    labels: list[str],
+    datasets: list[dict[str, Any]],
+    meaning: str,
+    unit: str = "%",
+    chart_type: str = "line",
+) -> dict[str, Any]:
+    return {
+        "id": chart_id,
+        "section": section,
+        "title": title,
+        "labels": labels,
+        "datasets": datasets,
+        "type": chart_type,
+        "hint": _hint(meaning, labels, datasets, unit=unit),
+    }
+
+
+def build_chart_configs(
+    report: dict[str, Any], chart_data: dict[str, Any] | None = None
+) -> list[dict[str, Any]]:
     sections = report.get("sections", {})
     charts: list[dict[str, Any]] = []
 
@@ -72,17 +175,18 @@ def build_chart_configs(report: dict[str, Any]) -> list[dict[str, Any]]:
     _, m1_values = _series(lnh, "m1_4w")
     if labels:
         charts.append(
-            {
-                "id": "chart-lnh",
-                "section": "lnh",
-                "title": "Lãi suất liên ngân hàng VND",
-                "labels": labels,
-                "datasets": [
+            _chart(
+                "chart-lnh",
+                "lnh",
+                "Lãi suất liên ngân hàng VND",
+                labels,
+                [
                     {"label": "Qua đêm", "data": on_values, "color": "#8b5cf6"},
                     {"label": "1 tuần", "data": w1_values, "color": "#ec4899"},
                     {"label": "1 tháng", "data": m1_values, "color": "#06b6d4"},
                 ],
-            }
+                "Lãi suất liên ngân hàng phản ánh chi phí vốn ngắn hạn giữa các ngân hàng.",
+            )
         )
 
     bonds = sections.get("lstp", {})
@@ -91,33 +195,180 @@ def build_chart_configs(report: dict[str, Any]) -> list[dict[str, Any]]:
     _, y10 = _series(bonds, "y10_4w")
     if labels:
         charts.append(
-            {
-                "id": "chart-yields",
-                "section": "lstp",
-                "title": "Lợi suất TPCP",
-                "labels": labels,
-                "datasets": [
+            _chart(
+                "chart-yields",
+                "lstp",
+                "Lợi suất TPCP",
+                labels,
+                [
                     {"label": "2 năm", "data": y2, "color": "#10b981"},
                     {"label": "5 năm", "data": y5, "color": "#f59e0b"},
                     {"label": "10 năm", "data": y10, "color": "#ef4444"},
                 ],
-            }
+                "Lợi suất TPCP đo chi phí vay của Chính phủ theo từng kỳ hạn.",
+            )
         )
 
     fx = sections.get("fx", {})
     labels, fx_values = _series(fx, "fx_mid_4w")
     if labels:
         charts.append(
-            {
-                "id": "chart-fx",
-                "section": "fx",
-                "title": "USD/VND thương mại (giá giữa)",
-                "labels": labels,
-                "datasets": [
-                    {"label": "USD/VND", "data": fx_values, "color": "#06b6d4"}
-                ],
-            }
+            _chart(
+                "chart-fx",
+                "fx",
+                "USD/VND thương mại (giá giữa)",
+                labels,
+                [{"label": "USD/VND", "data": fx_values, "color": "#06b6d4"}],
+                "Tỷ giá USD/VND cho biết giá trị đồng Việt Nam so với USD trên thị trường thương mại.",
+                unit="",
+            )
         )
+
+    # Upstream HNX/FRED data is optional: the report remains usable when an
+    # upstream provider is unavailable. When present, add the full 9-chart set.
+    chart_data = chart_data or {}
+    yield_labels, yield_series = _grouped_series(
+        chart_data.get("yields"), "tenor", "yield"
+    )
+    if yield_labels and yield_series:
+        colors = {"2Y": "#22c55e", "5Y": "#f59e0b", "10Y": "#ef4444"}
+        charts.append(
+            _chart(
+                "chart-hnx-yields",
+                "lstp",
+                "HNX yield curve — 2Y / 5Y / 10Y",
+                yield_labels,
+                [
+                    {
+                        "label": tenor,
+                        "data": values,
+                        "color": colors.get(tenor, "#94a3b8"),
+                    }
+                    for tenor, values in yield_series.items()
+                ],
+                "Đường cong HNX cho biết mặt bằng lợi suất giao dịch theo kỳ hạn.",
+            )
+        )
+        ordered = {
+            tenor: values
+            for tenor, values in yield_series.items()
+            if tenor in {"2Y", "5Y", "10Y"}
+        }
+        if all(tenor in ordered for tenor in ("2Y", "5Y", "10Y")):
+            slope = [
+                (
+                    ordered["10Y"][index] - ordered["2Y"][index]
+                    if ordered["10Y"][index] is not None
+                    and ordered["2Y"][index] is not None
+                    else None
+                )
+                for index in range(len(yield_labels))
+            ]
+            convexity = [
+                (
+                    2 * ordered["5Y"][index]
+                    - ordered["2Y"][index]
+                    - ordered["10Y"][index]
+                    if all(
+                        ordered[tenor][index] is not None
+                        for tenor in ("2Y", "5Y", "10Y")
+                    )
+                    else None
+                )
+                for index in range(len(yield_labels))
+            ]
+            charts.extend(
+                [
+                    _chart(
+                        "chart-slope",
+                        "lstp",
+                        "Slope HNX — 10Y trừ 2Y",
+                        yield_labels,
+                        [{"label": "Slope", "data": slope, "color": "#a78bfa"}],
+                        "Slope đo độ dốc đường cong giữa kỳ hạn 2 năm và 10 năm.",
+                        unit=" điểm %",
+                    ),
+                    _chart(
+                        "chart-convexity",
+                        "lstp",
+                        "Convexity HNX — 2×5Y trừ 2Y trừ 10Y",
+                        yield_labels,
+                        [
+                            {
+                                "label": "Convexity",
+                                "data": convexity,
+                                "color": "#38bdf8",
+                            }
+                        ],
+                        "Convexity đo độ cong của đoạn giữa trên đường cong lợi suất.",
+                        unit=" điểm %",
+                    ),
+                ]
+            )
+
+    auction_rows = chart_data.get("auctions")
+    if isinstance(auction_rows, list) and auction_rows:
+        auction_labels, auction_series = _grouped_series(
+            auction_rows, "tenor", "win_pct"
+        )
+        if auction_labels and auction_series:
+            charts.append(
+                _chart(
+                    "chart-auction",
+                    "lstp",
+                    "HNX auction — tỷ lệ trúng thầu",
+                    auction_labels,
+                    [
+                        {
+                            "label": tenor,
+                            "data": values,
+                            "color": "#f97316",
+                        }
+                        for tenor, values in auction_series.items()
+                    ],
+                    "Tỷ lệ trúng thầu là giá trị trúng chia cho giá trị gọi thầu.",
+                    unit="%",
+                    chart_type="bar",
+                )
+            )
+
+    for source_key, chart_id, title, color, meaning in [
+        (
+            "us_10y",
+            "chart-us10y",
+            "FRED US 10Y",
+            "#fb7185",
+            "Lợi suất Kho bạc Mỹ 10 năm là tham chiếu cho chi phí vốn dài hạn quốc tế.",
+        ),
+        (
+            "dxy",
+            "chart-dxy",
+            "FRED DXY proxy",
+            "#facc15",
+            "DXY proxy đo sức mạnh tương đối của USD trong rổ tiền tệ.",
+        ),
+    ]:
+        rows = chart_data.get(source_key)
+        if isinstance(rows, list) and rows:
+            labels = [_date_label(row.get("date")) for row in rows if isinstance(row, dict)]
+            values = [
+                float(row["value"])
+                if isinstance(row, dict) and isinstance(row.get("value"), (int, float))
+                else None
+                for row in rows
+            ]
+            if labels:
+                charts.append(
+                    _chart(
+                        chart_id,
+                        "global",
+                        title,
+                        labels,
+                        [{"label": title, "data": values, "color": color}],
+                        meaning,
+                        unit="" if source_key == "dxy" else "%",
+                    )
+                )
     return charts
 
 
@@ -150,9 +401,11 @@ def _render_prose(section: dict[str, Any]) -> str:
     return "\n".join(paragraphs)
 
 
-def render_report(report: dict[str, Any]) -> str:
+def render_report(
+    report: dict[str, Any], chart_data: dict[str, Any] | None = None
+) -> str:
     sections = report.get("sections", {})
-    chart_configs = build_chart_configs(report)
+    chart_configs = build_chart_configs(report, chart_data=chart_data)
     charts_by_section: dict[str, list[dict[str, Any]]] = {}
     for chart in chart_configs:
         charts_by_section.setdefault(chart["section"], []).append(chart)
@@ -172,6 +425,7 @@ def render_report(report: dict[str, Any]) -> str:
                 '<div class="chart-card">'
                 f'<h3>{_safe_text(chart["title"])}</h3>'
                 f'<div class="chart-wrap"><canvas id="{chart["id"]}"></canvas></div>'
+                f'<div class="chart-hint">{chart["hint"]}</div>'
                 "</div>"
             )
             for chart in charts_by_section.get(key, [])
@@ -212,7 +466,7 @@ def render_report(report: dict[str, Any]) -> str:
 .report-section{{display:none}} .report-section.active{{display:block}} .section-header{{display:flex;align-items:center;gap:12px;margin:14px 0}}
 .section-number{{display:grid;place-items:center;width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--accent),var(--accent2));font-weight:800}}
 h2{{font-size:21px;margin:0}} small{{color:var(--muted)}} .prose-card,.chart-card{{padding:22px;margin-bottom:16px}} p{{margin:0 0 13px}} p:last-child{{margin-bottom:0}}
-.chart-card h3{{margin:0 0 12px;font-size:16px}} .chart-wrap{{height:330px}} .foot{{color:var(--muted);font-size:12px;margin-top:22px;padding:14px;border-top:1px solid var(--line)}}
+.chart-card h3{{margin:0 0 12px;font-size:16px}} .chart-wrap{{height:330px}} .chart-hint{{margin-top:12px;padding:12px 14px;border-left:3px solid var(--accent2);background:#0b1324;color:var(--muted);font-size:13px}} .chart-hint strong{{color:var(--text)}} .foot{{color:var(--muted);font-size:12px;margin-top:22px;padding:14px;border-top:1px solid var(--line)}}
 @media(max-width:640px){{.wrap{{padding:16px 12px 52px}}.hero{{padding:22px}}.chart-wrap{{height:260px}}}}
 </style>
 </head>
@@ -239,7 +493,7 @@ function renderCharts(sectionId) {{
     const canvas = document.getElementById(item.id);
     if (!canvas) return;
     new Chart(canvas, {{
-      type: 'line',
+          type: item.type || 'line',
       data: {{
         labels: item.labels,
         datasets: item.datasets.map(series => ({{
@@ -286,11 +540,15 @@ if (initialSection) renderCharts(initialSection.id);
 def main() -> int:
     parser = argparse.ArgumentParser(description="Render report.json to HTML")
     parser.add_argument("--report", required=True, type=Path)
+    parser.add_argument("--chart-data", type=Path)
     parser.add_argument("--out", required=True, type=Path)
     args = parser.parse_args()
     report = json.loads(args.report.read_text(encoding="utf-8"))
+    chart_data = None
+    if args.chart_data and args.chart_data.exists():
+        chart_data = json.loads(args.chart_data.read_text(encoding="utf-8"))
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(render_report(report), encoding="utf-8")
+    args.out.write_text(render_report(report, chart_data=chart_data), encoding="utf-8")
     print(f"Built data-driven report: {args.out}")
     return 0
 

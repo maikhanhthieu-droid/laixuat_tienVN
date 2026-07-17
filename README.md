@@ -48,7 +48,7 @@ Bước 2: Fetch PDFs (rolling cache — chỉ fetch tuần mới)
 Bước 3: Fetch upstream (HNX yield curve + auction + FRED)
 Bước 4: Build report.json (extract + data-driven narrative)
 Bước 5: Verify data (45+ points cross-check, exit 1 nếu mismatch)
-Bước 6: Render HTML data-driven (charts + narrative từ `report.json`)
+Bước 6: Render HTML data-driven (charts + narrative từ `report.json` và `chart_data.json`)
 Bước 7: Audit gates (HTML structure + JS + banned words)
 Bước 8 (tùy chọn): Publish Telegram sau khi 7 gate trước đã pass
 ```
@@ -59,7 +59,7 @@ Bước 8 (tùy chọn): Publish Telegram sau khi 7 gate trước đã pass
 output/
 ├── report.html          ← báo cáo cuối (deploy lên Vercel)
 ├── report.json          ← data structured
-├── chart_data.json      ← HNX + FRED chart data
+├── chart_data.json      ← HNX auction/yield + FRED US 10Y/DXY
 └── sources_cache/       ← rolling cache (giữ 5 tuần)
     ├── sbv_2026-W24.txt
     ├── sbv_2026-W25.txt
@@ -130,14 +130,15 @@ vn-rates-weekly/
 │   ├── build_report_v2.py      # Build report.json
 │   ├── verify_data.py          # Cross-check 45+ points
 │   ├── render_report.py        # report.json → HTML data-driven
+│   ├── telegram_publish.py     # Summary + dashboard/file Telegram
+│   ├── telegram_setup.py       # Discover chat IDs
 │   └── qa_weekly.js            # Playwright visual QA
 ├── references/
 │   ├── sources_overview.md     # 3 PDF + 2 upstream sources
 │   ├── data_cards.md           # 35 indicators + narrative rules
 │   ├── rendering.md            # HTML patterns + chart hints
 │   └── preflight_check.md      # Tet/holiday + retry logic
-└── tests/
-    └── test_extract_cards.py   # 20 pytest tests
+└── tests/                      # Parser, renderer, Telegram and pipeline tests
 ```
 
 ## Lịch publish
@@ -166,7 +167,8 @@ $env:TELEGRAM_CHAT_ID = "123456789"
 
 # 3) Xem trước nội dung, không gọi Telegram
 python scripts/telegram_publish.py `
-  --report output/report.json --html output/report.html --dry-run
+  --report output/report.json --html output/report.html `
+  --chart-data output/chart_data.json --dry-run
 
 # 4) Chạy pipeline và phát báo cáo sau khi audit pass
 python scripts/run_pipeline.py --week 2026-W28 --out ./output `
