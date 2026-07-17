@@ -26,6 +26,37 @@ def _safe_text(value: Any) -> str:
     return html.escape(str(value)) if value not in (None, "") else ""
 
 
+def _render_analysis(analysis: dict[str, Any]) -> str:
+    if not isinstance(analysis, dict) or not analysis.get("metrics"):
+        return ""
+    rows = []
+    for metric in analysis.get("metrics", []):
+        if not isinstance(metric, dict) or metric.get("status") != "ok":
+            continue
+        forecasts = metric.get("forecasts", {})
+        four_week = forecasts.get("4w", {}) if isinstance(forecasts, dict) else {}
+        unit = metric.get("unit", "")
+        suffix = f" {unit}" if unit else ""
+        rows.append(
+            "<div class=\"analysis-row\">"
+            f"<strong>{_safe_text(metric.get('label'))}</strong>"
+            f"<span>{_safe_text(metric.get('signal'))}; "
+            f"4 tuần: {_safe_text(four_week.get('low'))}–{_safe_text(four_week.get('high'))}{_safe_text(suffix)}"
+            f" · tin cậy {_safe_text(metric.get('confidence'))}</span>"
+            "</div>"
+        )
+    if not rows:
+        return ""
+    return (
+        '<article class="analysis-card">'
+        f"<h2>{_safe_text(analysis.get('title', 'Phân tích xu hướng'))}</h2>"
+        f"<p><strong>Kịch bản cơ sở:</strong> {_safe_text(analysis.get('scenario'))}</p>"
+        f"<p class=\"analysis-method\">{_safe_text(analysis.get('method'))}</p>"
+        f"{''.join(rows)}"
+        "</article>"
+    )
+
+
 def _week_label(report: dict[str, Any]) -> str:
     period = report.get("period", {})
     year, week = period.get("year"), period.get("week")
@@ -447,6 +478,7 @@ def render_report(
     cutoff = _safe_text(period.get("data_cutoff", "—"))
     verdict = _safe_text(report.get("verdict", "CHƯA XÁC ĐỊNH"))
     chart_json = json.dumps(chart_configs, ensure_ascii=False)
+    analysis_html = _render_analysis(report.get("analysis", {}))
 
     return f"""<!doctype html>
 <html lang="vi">
@@ -466,7 +498,7 @@ def render_report(
 .report-section{{display:none}} .report-section.active{{display:block}} .section-header{{display:flex;align-items:center;gap:12px;margin:14px 0}}
 .section-number{{display:grid;place-items:center;width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--accent),var(--accent2));font-weight:800}}
 h2{{font-size:21px;margin:0}} small{{color:var(--muted)}} .prose-card,.chart-card{{padding:22px;margin-bottom:16px}} p{{margin:0 0 13px}} p:last-child{{margin-bottom:0}}
-.chart-card h3{{margin:0 0 12px;font-size:16px}} .chart-wrap{{height:330px}} .chart-hint{{margin-top:12px;padding:12px 14px;border-left:3px solid var(--accent2);background:#0b1324;color:var(--muted);font-size:13px}} .chart-hint strong{{color:var(--text)}} .foot{{color:var(--muted);font-size:12px;margin-top:22px;padding:14px;border-top:1px solid var(--line)}}
+.chart-card h3{{margin:0 0 12px;font-size:16px}} .chart-wrap{{height:330px}} .chart-hint{{margin-top:12px;padding:12px 14px;border-left:3px solid var(--accent2);background:#0b1324;color:var(--muted);font-size:13px}} .chart-hint strong{{color:var(--text)}} .analysis-card{{padding:18px 20px;margin:18px 0;background:linear-gradient(135deg,#17233d,#111a30);border:1px solid var(--accent2);border-radius:16px}} .analysis-card h2{{margin:0 0 8px}} .analysis-card p{{margin:6px 0}} .analysis-method{{color:var(--muted);font-size:13px}} .analysis-row{{display:flex;justify-content:space-between;gap:14px;padding:9px 0;border-top:1px solid var(--line);font-size:14px}} .analysis-row span{{color:var(--muted);text-align:right}} .foot{{color:var(--muted);font-size:12px;margin-top:22px;padding:14px;border-top:1px solid var(--line)}}
 @media(max-width:640px){{.wrap{{padding:16px 12px 52px}}.hero{{padding:22px}}.chart-wrap{{height:260px}}}}
 </style>
 </head>
@@ -479,6 +511,7 @@ h2{{font-size:21px;margin:0}} small{{color:var(--muted)}} .prose-card,.chart-car
       <span class="badge">Chốt dữ liệu: {cutoff}</span>
       <span class="badge verdict">{verdict}</span>
     </div>
+    {analysis_html}
   </header>
   <nav class="tabs">{"".join(tabs)}</nav>
   {"".join(section_html)}

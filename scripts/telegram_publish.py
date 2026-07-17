@@ -172,6 +172,19 @@ def build_summary(
             "<i>Nội dung tổng hợp số liệu, không phải khuyến nghị đầu tư.</i>",
         ]
     )
+    analysis = report.get("analysis", {})
+    scenario = analysis.get("scenario") if isinstance(analysis, dict) else None
+    if scenario:
+        lines.insert(
+            max(len(lines) - 3, 0),
+            f"🔎 <b>Kịch bản 1–4 tuần:</b> {html.escape(str(scenario))}",
+        )
+        confidence = analysis.get("confidence")
+        if confidence:
+            lines.insert(
+                max(len(lines) - 3, 0),
+                f"Độ tin cậy mô hình: {html.escape(str(confidence))}",
+            )
     text = "\n".join(lines)
     if len(text) > TELEGRAM_TEXT_LIMIT:
         text = text[: TELEGRAM_TEXT_LIMIT - 1] + "…"

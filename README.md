@@ -115,6 +115,18 @@ Pipeline tự động cross-check:
 
 45+ số liệu verified mỗi lần chạy.
 
+## Phân tích xu hướng 1–4 tuần
+
+`report.json` now includes an `analysis` block built only from the verified
+weekly series. It fits a deterministic linear trend for LNH qua đêm, LSTP 10
+năm and USD/VND, then reports a 1/2/4-week point estimate, a 95% prediction
+band, direction and confidence. The Telegram message shows the combined base
+scenario; the full HTML report shows each metric.
+
+This is a transparent statistical extrapolation, not an investment
+recommendation. It is intentionally separated from the verified facts and
+does not claim to know policy shocks outside the observation window.
+
 ## Cấu trúc skill
 
 ```
@@ -128,6 +140,7 @@ vn-rates-weekly/
 │   ├── upstream_fetch.py       # Fetch HNX+FRED trực tiếp
 │   ├── extract_cards.py        # Parse PDF text → structured
 │   ├── build_report_v2.py      # Build report.json
+│   ├── forecast_analysis.py    # Statistical 1–4 week scenario
 │   ├── verify_data.py          # Cross-check 45+ points
 │   ├── render_report.py        # report.json → HTML data-driven
 │   ├── telegram_publish.py     # Summary + dashboard/file Telegram

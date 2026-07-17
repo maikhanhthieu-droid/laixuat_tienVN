@@ -84,6 +84,17 @@ def test_summary_uses_verified_json_values():
     assert len(summary) <= 4096
 
 
+def test_summary_includes_model_scenario_when_present():
+    report = sample_report()
+    report["analysis"] = {
+        "scenario": "Căng ngắn hạn; dài hạn chưa xác nhận",
+        "confidence": "trung bình",
+    }
+    summary = build_summary(report)
+    assert "Kịch bản 1–4 tuần" in summary
+    assert "trung bình" in summary
+
+
 class FakeClient:
     def __init__(self) -> None:
         self.messages = []

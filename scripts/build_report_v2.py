@@ -19,6 +19,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from extract_cards import (
     parse_sbv_interbank_real, parse_vbma_full, parse_vnba_full,
 )
+from forecast_analysis import build_forecast
 
 
 def fmt_pct(v, sign=True):
@@ -458,6 +459,7 @@ def build_report_v2(cache_dir: Path, target_week: str) -> dict:
             "vnba (tuần cuối)": ["CB rates", "10Y govy 8", "equities 9", "bank PBT 10", "commodities", "gold SJC"],
         },
     }
+    report["analysis"] = build_forecast(report)
     return report
 
 
