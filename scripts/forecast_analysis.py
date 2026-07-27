@@ -91,12 +91,24 @@ def _metric(
     latest = points[-1][1]
     scale = max(abs(latest), 1.0)
     threshold = 0.0005 * scale if unit == "VND" else 0.03
-    if abs(slope) <= threshold:
+    # Headline direction means the latest observed move. The regression slope
+    # remains available separately as the fitted-window trend.
+    observed_change = latest - points[-2][1] if n >= 2 else 0.0
+    if n < 2:
+        signal = "chưa đủ dữ liệu"
+    elif abs(observed_change) <= threshold:
         signal = "đi ngang"
-    elif slope > 0:
+    elif observed_change > 0:
         signal = "tăng"
     else:
         signal = "giảm"
+
+    if abs(slope) <= threshold:
+        trend_signal = "đi ngang"
+    elif slope > 0:
+        trend_signal = "tăng"
+    else:
+        trend_signal = "giảm"
 
     r2 = fit["r2"]
     if n >= 4 and isinstance(r2, float) and r2 >= 0.5:
@@ -131,9 +143,13 @@ def _metric(
         "status": "ok",
         "data_points": n,
         "latest": _round(latest, decimals),
+        "previous": _round(points[-2][1], decimals) if n >= 2 else None,
+        "observed_change": _round(observed_change, decimals + 2) if n >= 2 else None,
         "slope_per_week": _round(slope, decimals + 2),
         "signal": signal,
+        "trend_signal": trend_signal,
         "confidence": confidence,
+        "show_numeric_forecast": confidence != "thấp",
         "r2": _round(float(r2), 2) if isinstance(r2, float) else None,
         "forecasts": forecasts,
     }

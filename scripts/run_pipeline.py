@@ -268,6 +268,22 @@ def verify_data(cache_dir: Path, out_dir: Path) -> bool:
     )
 
 
+def build_shared_feed(out_dir: Path) -> bool:
+    """Export facts only after source verification succeeds."""
+    step("BƯỚC 5b: Build shared facts feed")
+    return run(
+        [
+            sys.executable,
+            str(SCRIPTS_DIR / "build_shared_feed.py"),
+            "--report",
+            str(out_dir / "report.json"),
+            "--out",
+            str(out_dir / "rates_feed_latest.json"),
+        ],
+        "Build shared facts feed",
+    )
+
+
 def render_html(out_dir: Path) -> bool:
     """Bước 6: Render data-driven HTML report."""
     step("BƯỚC 6: Render polished HTML")
@@ -385,6 +401,10 @@ def main():
     # Bước 5: Verify data
     if not verify_data(cache_dir, out_dir):
         print("\n❌ Pipeline FAILED at data verification")
+        sys.exit(1)
+
+    if not build_shared_feed(out_dir):
+        print("\n❌ Pipeline FAILED at shared feed export")
         sys.exit(1)
 
     # Bước 6: Render data-driven HTML

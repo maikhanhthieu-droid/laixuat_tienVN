@@ -1,0 +1,15 @@
+{
+  "schema_version": "vn-rates.facts.v1",
+  "producer": "maikhanhthieu-droid/laixuat_tienVN",
+  "generated_at": null,
+  "as_of": null,
+  "status": "missing",
+  "facts": {},
+  "quality": {
+    "facts_only": true,
+    "forecasts_included": false,
+    "ai_output_included": false,
+    "verification_required_before_export": true,
+    "note": "Placeholder only; the verified weekly pipeline replaces this file."
+  }
+}

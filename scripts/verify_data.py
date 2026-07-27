@@ -282,7 +282,9 @@ def verify_report_v2(report_path: Path, cache_dir: Path, strict: bool = False) -
     weeks = report["period"]["weeks_covered"]
     results: list[VerifyResult] = []
 
-    # === 1. LNH from SBV (4 weeks × 3 tenors = 12) — keep v1 logic ===
+    # === 1. LNH averages from SBV (4 weeks x 3 tenors) ===
+    # ``on_avg_4w`` is the SBV weekly-average definition. ``on_4w`` is
+    # reserved for the VBMA Friday-close definition and verified separately.
     for week in weeks:
         week_short = week.split("-")[-1]
         sbv_file = cache_dir / f"sbv_{week}.txt"
@@ -291,18 +293,47 @@ def verify_report_v2(report_path: Path, cache_dir: Path, strict: bool = False) -
         text = sbv_file.read_text(encoding="utf-8", errors="ignore")
         truth_lnh = parse_sbv_lnh(text)
         excerpt = excerpt_around(text, r"Qua đêm.*?9 tháng", 100)
-        # In v2, LNH data is in sections.lnh.data_summary.on_4w etc
-        on_4w = report.get("sections", {}).get("lnh", {}).get("data_summary", {}).get("on_4w", [])
+        on_avg_4w = report.get("sections", {}).get("lnh", {}).get("data_summary", {}).get("on_avg_4w", [])
         w1_4w = report.get("sections", {}).get("lnh", {}).get("data_summary", {}).get("w1_4w", [])
         m1_4w = report.get("sections", {}).get("lnh", {}).get("data_summary", {}).get("m1_4w", [])
-        for series, truth_key, src_4w in [("lnh_on", "overnight", on_4w),
+        for series, truth_key, src_4w in [("lnh_on_weekly_avg", "overnight", on_avg_4w),
                                             ("lnh_1w", "one_week", w1_4w),
                                             ("lnh_1m", "one_month", m1_4w)]:
             reported = next((v["value"] for v in src_4w if v["week"] in (week, week_short) or v["week"].endswith(week_short)), None)
             truth = truth_lnh.get(truth_key)
             results.append(_make_result(series, week_short, reported, truth, sbv_file.name, excerpt, strict))
 
-    # === 2. LSTP from VBMA (4 weeks × 3 tenors = 12) — keep v1 logic ===
+    # === 1b. LNH Friday close from VBMA ===
+    on_close_4w = report.get("sections", {}).get("lnh", {}).get("data_summary", {}).get("on_4w", [])
+    for week in weeks:
+        week_short = week.split("-")[-1]
+        vbma_file = cache_dir / f"vbma_{week_short}.txt"
+        if not vbma_file.exists():
+            continue
+        text = vbma_file.read_text(encoding="utf-8", errors="ignore")
+        truth = parse_vbma_lnh_tb5(text).get("on_close")
+        reported = next(
+            (
+                value["value"]
+                for value in on_close_4w
+                if value["week"] in (week, week_short) or value["week"].endswith(week_short)
+            ),
+            None,
+        )
+        excerpt = excerpt_around(text, r"^\s*ON\s+(\d+\.\d+)", 60)
+        results.append(
+            _make_result(
+                "lnh_on_friday_close",
+                week_short,
+                reported,
+                truth,
+                vbma_file.name,
+                excerpt,
+                strict,
+            )
+        )
+
+    # === 2. LSTP from VBMA (4 weeks x 3 tenors) ===
     for week in weeks:
         week_short = week.split("-")[-1]
         vbma_file = cache_dir / f"vbma_{week_short}.txt"

@@ -49,7 +49,7 @@ def fmt_vnd(v):
     return f"{v:.0f} tỷ"
 
 
-def generate_lnh_prose(sbv_data_4w: list[dict], vbma_data: dict, target_week: str = "2026-W26") -> dict:
+def generate_lnh_prose(sbv_data_4w: list[dict], vbma_data: object, target_week: str = "2026-W26") -> dict:
     """Generate prose cho section Liên ngân hàng.
 
     sbv_data_4w: list of parse_sbv_interbank_real results for 4 weeks
@@ -58,6 +58,8 @@ def generate_lnh_prose(sbv_data_4w: list[dict], vbma_data: dict, target_week: st
     # Derive week labels from target_week parameter
     from datetime import date as _date
     _year, _week = int(target_week.split("-")[0]), int(target_week.split("-W")[1])
+    _cutoff = _date.fromisocalendar(_year, _week, 5)
+    cutoff_label = f"{_cutoff.day}/{_cutoff.month}/{_cutoff.year}"
     weeks = []
     for _w in range(_week - 3, _week + 1):
         if _w < 1:
@@ -66,13 +68,26 @@ def generate_lnh_prose(sbv_data_4w: list[dict], vbma_data: dict, target_week: st
             weeks.append(f"W{_lw + _w:02d}")
         else:
             weeks.append(f"W{_w:02d}")
-    on_values = [d.get("overnight") for d in sbv_data_4w]
+    on_avg_values = [d.get("overnight") for d in sbv_data_4w]
     w1_values = [d.get("one_week") for d in sbv_data_4w]
     m1_values = [d.get("one_month") for d in sbv_data_4w]
+    vbma_items = vbma_data if isinstance(vbma_data, list) else [vbma_data]
+    vbma_latest = vbma_items[-1] if vbma_items else None
+    on_values = [
+        getattr(item, "interbank", {}).get("ON", {}).get("close")
+        if item is not None else None
+        for item in vbma_items
+    ]
+    # Canonical headline series: VBMA Friday close, matching vimo-VN.
+    # Never silently mix it with SBV's weekly-average series.
+    if sum(value is not None for value in on_values) < 2:
+        on_values = [None] * max(len(on_avg_values), len(on_values))
 
     # === Tóm tắt xu hướng (trend) ===
-    on_now, on_then = on_values[-1], on_values[0]
-    on_delta = on_now - on_then if (on_now and on_then) else None
+    valid_on = [value for value in on_values if value is not None]
+    on_now = valid_on[-1] if valid_on else None
+    on_then = valid_on[0] if valid_on else None
+    on_delta = on_now - on_then if (on_now is not None and on_then is not None) else None
     on_dir = "giảm" if (on_delta and on_delta < 0) else "tăng" if on_delta else "đi ngang"
     on_connector = (
         "lên" if on_delta and on_delta > 0
@@ -81,14 +96,20 @@ def generate_lnh_prose(sbv_data_4w: list[dict], vbma_data: dict, target_week: st
     )
 
     # === Phân tích chi tiết ===
-    overview = (
-        f"Trong 4 tuần qua, lãi suất liên ngân hàng (LNH) qua đêm (VND) {on_dir} "
-        f"từ {on_then}% {on_connector} {on_now}% — biến động {fmt_bp(on_delta*100 if on_delta else 0)} "
-        f"trong kỳ. Chỉ tiêu này phản ánh thay đổi chi phí vốn qua đêm; báo cáo không suy diễn nguyên nhân khi nguồn chưa công bố."
-    )
+    if on_now is None:
+        overview = (
+            "Chưa đủ ít nhất 2 kỳ VBMA cùng định nghĩa (lãi suất ON đóng cửa) "
+            "để xác định xu hướng; không dùng số bình quân tuần SBV thay thế."
+        )
+    else:
+        overview = (
+            f"Trong cửa sổ VBMA hiện có, lãi suất liên ngân hàng (LNH) qua đêm đóng cửa {on_dir} "
+            f"từ {on_then}% {on_connector} {on_now}% — biến động {fmt_bp(on_delta*100 if on_delta else 0)}. "
+            "Chỉ tiêu này là mức đóng cửa cuối tuần; không trộn với bình quân tuần SBV."
+        )
 
     # === Tuần cuối chi tiết (VBMA có close + WoW bp) ===
-    on_vbma = vbma_data.interbank.get("ON", {})
+    on_vbma = getattr(vbma_latest, "interbank", {}).get("ON", {})
     w26_detail = ""
     if on_vbma:
         close = on_vbma.get("close")
@@ -96,7 +117,7 @@ def generate_lnh_prose(sbv_data_4w: list[dict], vbma_data: dict, target_week: st
         wow_bp = on_vbma.get("wow_bp")
         mom_bp = on_vbma.get("mom_bp")
         w26_detail = (
-            f"Theo VBMA, LNH ON ngày 26/6 đóng cửa ở mức {close}% (bình quân 5 ngày {tb5}%), "
+            f"Theo VBMA, LNH ON ngày {cutoff_label} đóng cửa ở mức {close}% (bình quân 5 ngày {tb5}%), "
             f"{fmt_bp(wow_bp)} so với tuần trước và {fmt_bp(mom_bp)} so với tháng trước. "
             f"Lãi suất kỳ hạn 1 tuần dao động mạnh: kỳ hạn cuối đạt {w1_values[-1]}%, "
             f"{'tăng vọt' if w1_values[-1] and w1_values[-2] and w1_values[-1] > w1_values[-2] * 1.1 else 'ổn định'} "
@@ -105,8 +126,8 @@ def generate_lnh_prose(sbv_data_4w: list[dict], vbma_data: dict, target_week: st
 
     # === Doanh số giao dịch (cần từ VBMA) ===
     volume_note = ""
-    if vbma_data.omo_outstanding:
-        volume_note = f"Thanh khoản thị trường: OMO lưu hành {fmt_vnd(vbma_data.omo_outstanding * 1000)}."
+    if getattr(vbma_latest, "omo_outstanding", None):
+        volume_note = f"Thanh khoản thị trường: OMO lưu hành {fmt_vnd(vbma_latest.omo_outstanding * 1000)}."
 
     return {
         "title": "Thị trường Liên ngân hàng (VND)",
@@ -115,6 +136,9 @@ def generate_lnh_prose(sbv_data_4w: list[dict], vbma_data: dict, target_week: st
         "volume_note": volume_note,
         "data_summary": {
             "on_4w": [{"week": w, "value": v} for w, v in zip(weeks, on_values)],
+            "on_4w_definition": "VBMA Friday close",
+            "on_avg_4w": [{"week": w, "value": v} for w, v in zip(weeks, on_avg_values)],
+            "on_avg_4w_definition": "SBV weekly average",
             "w1_4w": [{"week": w, "value": v} for w, v in zip(weeks, w1_values)],
             "m1_4w": [{"week": w, "value": v} for w, v in zip(weeks, m1_values)],
         },
@@ -390,7 +414,7 @@ def build_report_v2(cache_dir: Path, target_week: str) -> dict:
         vnba_w26 = parse_vnba_full(vnba_file.read_text(encoding="utf-8", errors="ignore"))
 
     # Generate prose per chủ đề
-    lnh_prose = generate_lnh_prose(sbv_4w, vbma_w26, target_week)
+    lnh_prose = generate_lnh_prose(sbv_4w, vbma_4w, target_week)
     lstp_prose = generate_lstp_prose(vbma_4w, vnba_w26, target_week)
     fx_prose = generate_fx_prose(sbv_4w, vbma_w26, vnba_w26, target_week)
     global_prose = generate_global_prose(vnba_w26)

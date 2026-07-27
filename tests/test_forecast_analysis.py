@@ -50,3 +50,47 @@ def test_forecast_returns_point_and_band_for_verified_series():
     assert lnh["status"] == "ok"
     assert lnh["forecasts"]["4w"]["point"] > lnh["latest"]
     assert lnh["forecasts"]["4w"]["low"] < lnh["forecasts"]["4w"]["high"]
+
+
+def test_headline_direction_uses_latest_observed_move_not_regression_slope():
+    report = {
+        "sections": {
+            "lnh": {
+                "data_summary": {
+                    "on_4w": [
+                        {"week": "W25", "value": 3.00},
+                        {"week": "W26", "value": 4.00},
+                        {"week": "W27", "value": 5.00},
+                        {"week": "W28", "value": 4.20},
+                    ]
+                }
+            },
+            "lstp": {"data_summary": {}},
+            "fx": {"data_summary": {}},
+        }
+    }
+    metric = build_forecast(report)["metrics"][0]
+    assert metric["signal"] == "giảm"
+    assert metric["trend_signal"] == "tăng"
+    assert metric["observed_change"] == -0.8
+
+
+def test_low_confidence_metric_suppresses_numeric_publication():
+    report = {
+        "sections": {
+            "lnh": {
+                "data_summary": {
+                    "on_4w": [
+                        {"week": "W27", "value": 4.28},
+                        {"week": "W28", "value": 3.87},
+                    ]
+                }
+            },
+            "lstp": {"data_summary": {}},
+            "fx": {"data_summary": {}},
+        }
+    }
+    metric = build_forecast(report)["metrics"][0]
+    assert metric["signal"] == "giảm"
+    assert metric["confidence"] == "thấp"
+    assert metric["show_numeric_forecast"] is False

@@ -438,13 +438,22 @@ def _detail_messages(report: dict[str, Any]) -> list[str]:
         for metric in analysis.get("metrics", []):
             if not isinstance(metric, dict) or metric.get("status") != "ok":
                 continue
+            if not metric.get(
+                "show_numeric_forecast", metric.get("confidence") != "thấp"
+            ):
+                lines.append(
+                    f"• <b>{html.escape(str(metric.get('label')))}:</b> "
+                    f"{html.escape(str(metric.get('signal')))} so với kỳ liền trước; "
+                    "không hiển thị ngoại suy số do độ tin cậy thấp"
+                )
+                continue
             four_week = metric.get("forecasts", {}).get("4w", {})
             unit = str(metric.get("unit", ""))
             suffix = f" {unit}" if unit else ""
             lines.append(
                 f"• <b>{html.escape(str(metric.get('label')))}:</b> "
-                f"{html.escape(str(metric.get('signal')))}; "
-                f"4 tuần {html.escape(str(four_week.get('low')))}–"
+                f"{html.escape(str(metric.get('signal')))} so với kỳ liền trước; "
+                f"dải ngoại suy sau 4 tuần: {html.escape(str(four_week.get('low')))}–"
                 f"{html.escape(str(four_week.get('high')))}{html.escape(suffix)} "
                 f"(tin cậy {html.escape(str(metric.get('confidence')))})"
             )
