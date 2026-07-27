@@ -24,6 +24,8 @@ BANNED_WORDS = [
     "chiến lược kéo dài đáo hạn", "gợi ý", "điều này có nghĩa",
     "sẽ phải", "chắc chắn rằng", "ý đồ",
     "tín hiệu tích cực", "tín hiệu tiêu cực", "đáng lo ngại",
+    "chắc chắn tăng", "chắc chắn giảm", "tăng là tốt", "giảm là xấu",
+    "dovish", "hawkish",
 ]
 
 

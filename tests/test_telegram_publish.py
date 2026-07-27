@@ -30,16 +30,34 @@ def sample_report() -> dict:
                 "2026-W28",
             ],
         },
-        "verdict": "THẮT CHẶT NHẸ",
+        "verdict": "PHÂN KỲ",
         "sections": {
             "lnh": {
                 "data_summary": {
                     "on_4w": [
-                        {"week": "W25", "value": 3.90},
-                        {"week": "W26", "value": 4.26},
+                        {"week": "W25", "value": None},
+                        {"week": "W26", "value": None},
+                        {"week": "W27", "value": 4.28},
+                        {"week": "W28", "value": 3.87},
+                    ],
+                    "on_avg_4w": [
+                        {"week": "W25", "value": 4.26},
+                        {"week": "W26", "value": 4.45},
                         {"week": "W27", "value": 4.75},
                         {"week": "W28", "value": 5.21},
-                    ]
+                    ],
+                    "w1_4w": [
+                        {"week": "W25", "value": 5.10},
+                        {"week": "W26", "value": 5.45},
+                        {"week": "W27", "value": 5.90},
+                        {"week": "W28", "value": 6.20},
+                    ],
+                    "m1_4w": [
+                        {"week": "W25", "value": 6.80},
+                        {"week": "W26", "value": 7.00},
+                        {"week": "W27", "value": 7.10},
+                        {"week": "W28", "value": 7.32},
+                    ],
                 }
             },
             "lstp": {
@@ -69,15 +87,23 @@ def test_summary_uses_verified_json_values():
         "dxy": [{"date": "2026-07-10", "value": 101.4}],
     }
     metrics = extract_headlines(report, chart_data=chart_data)
-    assert metrics["lnh_now"] == 5.21
-    assert round(metrics["lnh_delta_bp"]) == 131
+    assert metrics["lnh_now"] == 3.87
+    assert metrics["lnh_points"] == 2
+    assert round(metrics["lnh_delta_bp"]) == -41
+    assert metrics["lnh_avg_now"] == 5.21
+    assert metrics["lnh_avg_points"] == 4
+    assert round(metrics["lnh_avg_delta_bp"]) == 95
     assert round(metrics["y10_delta_bp"]) == 3
     assert metrics["us10y_now"] == 4.37
 
     summary = build_summary(report, chart_data=chart_data)
     assert "Tuần 28/2026" in summary
+    assert "LNH ON đóng cửa thứ Sáu (VBMA)" in summary
+    assert "3,87%" in summary
+    assert "-41 đcb/2 kỳ có dữ liệu" in summary
+    assert "LNH ON bình quân tuần (SBV)" in summary
     assert "5,21%" in summary
-    assert "+131 đcb" in summary
+    assert "+95 đcb/cửa sổ 4 kỳ" in summary
     assert "4,40%" in summary
     assert "26.268" in summary
     assert "US 10Y" in summary
@@ -88,24 +114,29 @@ def test_summary_uses_verified_json_values():
 def test_summary_includes_model_scenario_when_present():
     report = sample_report()
     report["analysis"] = {
-        "scenario": "LNH tăng; LSTP dài hạn chưa xác nhận",
+        "observed_state": "Kỳ gần nhất — LNH giảm; LSTP tăng",
+        "base_case": "Nếu quan hệ 4 tuần tiếp diễn, đây là kịch bản có điều kiện.",
         "confidence": "trung bình",
+        "confidence_basis": "2/3 chuỗi đủ điều kiện công bố dải số",
+        "balance_notes": [
+            "Tăng/giảm không tự động đồng nghĩa tốt/xấu; tác động khác nhau theo từng chủ thể."
+        ],
     }
     summary = build_summary(report)
-    assert "Ngoại suy thống kê 1–4 tuần" in summary
+    assert "Trạng thái quan sát" in summary
+    assert "Kịch bản mô hình tham khảo" in summary
     assert "trung bình" in summary
+    assert "không phải xác suất" in summary
+    assert "không tự động đồng nghĩa tốt/xấu" in summary
 
 
 def test_neutral_indicators_are_formula_only():
     report = sample_report()
-    report["sections"]["lnh"]["data_summary"]["m1_4w"] = [
-        {"week": "W28", "value": 7.32}
-    ]
     report["sections"]["lstp"]["data_summary"]["y2_4w"] = [
         {"week": "W28", "value": 3.50}
     ]
     indicators = extract_neutral_indicators(report)
-    assert any("1 tháng–ON" in item for item in indicators)
+    assert "Chênh lệch LNH bình quân tuần SBV 1 tháng–ON: +211 đcb" in indicators
     assert any("10Y–2Y" in item for item in indicators)
     assert any("Biên độ USD/VND" in item for item in indicators)
 
@@ -173,7 +204,8 @@ def test_publish_without_document_sends_details_as_messages(tmp_path):
     report_path = tmp_path / "report.json"
     report = sample_report()
     report["analysis"] = {
-        "scenario": "LNH tăng; LSTP dài hạn chưa xác nhận",
+        "observed_state": "Kỳ gần nhất — LNH giảm; LSTP tăng",
+        "base_case": "Chưa công bố dải số.",
         "confidence": "trung bình",
         "metrics": [],
     }

@@ -37,24 +37,73 @@ def _render_analysis(analysis: dict[str, Any]) -> str:
         four_week = forecasts.get("4w", {}) if isinstance(forecasts, dict) else {}
         unit = metric.get("unit", "")
         suffix = f" {unit}" if unit else ""
+        if metric.get("show_numeric_forecast") is True:
+            result = (
+                f"{_safe_text(metric.get('signal'))}; dải 4 tuần: "
+                f"{_safe_text(four_week.get('low'))}–{_safe_text(four_week.get('high'))}"
+                f"{_safe_text(suffix)} · tin cậy {_safe_text(metric.get('confidence'))}"
+            )
+        else:
+            reason = {
+                "direction_conflict": "kỳ gần nhất trái hướng xu hướng cửa sổ",
+                "insufficient_data": "chưa đủ 4 kỳ đã kiểm chứng",
+                "low_confidence": "độ phù hợp thống kê dưới ngưỡng",
+            }.get(str(metric.get("forecast_status")), "chưa vượt điều kiện công bố")
+            result = (
+                f"{_safe_text(metric.get('signal'))}; ẩn dải số — "
+                f"{_safe_text(reason)} · tin cậy {_safe_text(metric.get('confidence'))}"
+            )
         rows.append(
             "<div class=\"analysis-row\">"
             f"<strong>{_safe_text(metric.get('label'))}</strong>"
-            f"<span>{_safe_text(metric.get('signal'))}; "
-            f"4 tuần: {_safe_text(four_week.get('low'))}–{_safe_text(four_week.get('high'))}{_safe_text(suffix)}"
-            f" · tin cậy {_safe_text(metric.get('confidence'))}</span>"
+            f"<span>{result}<br><small>{_safe_text(metric.get('neutral_assessment'))}</small></span>"
             "</div>"
         )
     if not rows:
         return ""
-    return (
+    confirmations = analysis.get("confirmation_conditions", [])
+    invalidations = analysis.get("invalidation_conditions", [])
+    balance_notes = analysis.get("balance_notes", [])
+    confirmations = confirmations if isinstance(confirmations, list) else []
+    invalidations = invalidations if isinstance(invalidations, list) else []
+    balance_notes = balance_notes if isinstance(balance_notes, list) else []
+    confirmation_html = "".join(
+        f"<li>{_safe_text(item)}</li>" for item in confirmations
+    )
+    invalidation_html = "".join(
+        f"<li>{_safe_text(item)}</li>" for item in invalidations
+    )
+    balance_html = "".join(
+        f"<li>{_safe_text(item)}</li>" for item in balance_notes
+    )
+    parts = [
         '<article class="analysis-card">'
         f"<h2>{_safe_text(analysis.get('title', 'Phân tích xu hướng'))}</h2>"
-        f"<p><strong>Kịch bản cơ sở:</strong> {_safe_text(analysis.get('scenario'))}</p>"
+        f"<p><strong>Trạng thái quan sát:</strong> "
+        f"{_safe_text(analysis.get('observed_state') or analysis.get('scenario'))}</p>"
+        f"<p><strong>Kịch bản có điều kiện:</strong> {_safe_text(analysis.get('base_case'))}</p>"
+        f"<p><strong>Độ tin cậy:</strong> {_safe_text(analysis.get('confidence'))}"
+        f" — {_safe_text(analysis.get('confidence_basis'))} (không phải xác suất)</p>"
         f"<p class=\"analysis-method\">{_safe_text(analysis.get('method'))}</p>"
-        f"{''.join(rows)}"
-        "</article>"
+        f"{''.join(rows)}",
+    ]
+    if confirmation_html:
+        parts.append(
+            f"<p><strong>Điều kiện xác nhận</strong></p><ul>{confirmation_html}</ul>"
+        )
+    if invalidation_html:
+        parts.append(
+            f"<p><strong>Điều kiện làm kịch bản mất hiệu lực</strong></p><ul>{invalidation_html}</ul>"
+        )
+    if balance_html:
+        parts.append(f"<ul>{balance_html}</ul>")
+    parts.extend(
+        [
+            f"<p class=\"analysis-method\">{_safe_text(analysis.get('uncertainty_note'))}</p>",
+            "</article>",
+        ]
     )
+    return "".join(parts)
 
 
 def _week_label(report: dict[str, Any]) -> str:
@@ -201,7 +250,7 @@ def build_chart_configs(
     charts: list[dict[str, Any]] = []
 
     lnh = sections.get("lnh", {})
-    labels, on_values = _series(lnh, "on_4w")
+    labels, on_values = _series(lnh, "on_avg_4w")
     _, w1_values = _series(lnh, "w1_4w")
     _, m1_values = _series(lnh, "m1_4w")
     if labels:
@@ -209,14 +258,29 @@ def build_chart_configs(
             _chart(
                 "chart-lnh",
                 "lnh",
-                "Lãi suất liên ngân hàng VND",
+                "Lãi suất liên ngân hàng VND — bình quân tuần SBV",
                 labels,
                 [
-                    {"label": "Qua đêm", "data": on_values, "color": "#8b5cf6"},
-                    {"label": "1 tuần", "data": w1_values, "color": "#ec4899"},
-                    {"label": "1 tháng", "data": m1_values, "color": "#06b6d4"},
+                    {
+                        "label": "ON bình quân tuần (SBV)",
+                        "data": on_values,
+                        "color": "#8b5cf6",
+                    },
+                    {
+                        "label": "1 tuần bình quân (SBV)",
+                        "data": w1_values,
+                        "color": "#ec4899",
+                    },
+                    {
+                        "label": "1 tháng bình quân (SBV)",
+                        "data": m1_values,
+                        "color": "#06b6d4",
+                    },
                 ],
-                "Lãi suất liên ngân hàng phản ánh chi phí vốn ngắn hạn giữa các ngân hàng.",
+                (
+                    "Ba kỳ hạn cùng dùng định nghĩa bình quân tuần SBV để tránh "
+                    "trộn với mức đóng cửa thứ Sáu của VBMA."
+                ),
             )
         )
 

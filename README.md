@@ -117,15 +117,26 @@ Pipeline tự động cross-check:
 
 ## Phân tích xu hướng 1–4 tuần
 
-`report.json` now includes an `analysis` block built only from the verified
-weekly series. It fits a deterministic linear trend for LNH qua đêm, LSTP 10
-năm and USD/VND, then reports a 1/2/4-week point estimate, a 95% prediction
-band, direction and confidence. The Telegram message shows the combined base
-scenario; the full HTML report shows each metric.
+`report.json` có khối `analysis` chỉ dùng các chuỗi tuần đã kiểm chứng. Mô hình
+hồi quy tuyến tính được áp dụng cho LNH ON đóng cửa thứ Sáu (VBMA), LSTP 10 năm
+và USD/VND. Dải dự báo 1/2/4 tuần chỉ được công bố khi có ít nhất 4 kỳ, hướng
+biến động kỳ gần nhất trùng hướng xu hướng cửa sổ và R² ≥ 0,50. Nếu không đạt,
+mô hình vẫn giữ kết quả nội bộ cho audit nhưng Telegram/HTML sẽ ẩn dải số và
+ghi rõ nguyên nhân.
 
-This is a transparent statistical extrapolation, not an investment
-recommendation. It is intentionally separated from the verified facts and
-does not claim to know policy shocks outside the observation window.
+Phần hiển thị tách riêng:
+
+- trạng thái đã quan sát;
+- kịch bản có điều kiện;
+- điều kiện xác nhận và điều kiện làm kịch bản mất hiệu lực;
+- đánh giá tác động trung lập theo từng chủ thể.
+
+Độ tin cậy là ngưỡng kiểm chứng nội bộ, không phải xác suất xảy ra. Tăng/giảm
+không tự động đồng nghĩa tốt/xấu và kết quả không thay thế quyết định đầu tư.
+
+Hai định nghĩa LNH ON được giữ riêng: `on_4w` là mức đóng cửa thứ Sáu của VBMA;
+`on_avg_4w` là bình quân tuần của SBV. Chart kỳ hạn và chênh lệch 1 tháng–ON chỉ
+dùng các chuỗi bình quân tuần SBV, không trộn với mức đóng cửa VBMA.
 
 ## Cấu trúc skill
 

@@ -82,6 +82,7 @@ def test_chart_configs_use_report_series():
     lnh = next(item for item in charts if item["id"] == "chart-lnh")
     assert lnh["labels"][-1] == "Tuần 28"
     assert lnh["datasets"][0]["data"][-1] == 5.21
+    assert lnh["datasets"][0]["label"] == "ON bình quân tuần (SBV)"
     assert len(charts) == 9
     assert {item["id"] for item in charts} >= {
         "chart-hnx-yields",
@@ -110,3 +111,31 @@ def test_rendered_report_passes_audit_gates(tmp_path):
         render_report(report, chart_data=sample_chart_data()), encoding="utf-8"
     )
     assert run_all_gates(output)
+
+
+def test_renderer_hides_numeric_range_when_model_gate_fails():
+    report = sample_report()
+    report["analysis"] = {
+        "title": "Phân tích xu hướng 1–4 tuần",
+        "observed_state": "Kỳ gần nhất — LNH giảm",
+        "base_case": "Chưa công bố kịch bản số.",
+        "confidence": "thấp",
+        "confidence_basis": "0/3 chuỗi đủ điều kiện công bố dải số",
+        "metrics": [
+            {
+                "key": "lnh_overnight",
+                "label": "LNH ON đóng cửa thứ Sáu (VBMA)",
+                "status": "ok",
+                "signal": "giảm",
+                "confidence": "thấp",
+                "forecast_status": "direction_conflict",
+                "show_numeric_forecast": False,
+                "neutral_assessment": "Không tự động là tốt hoặc xấu.",
+                "forecasts": {"4w": {"low": 1.23, "high": 9.87}},
+            }
+        ],
+    }
+    rendered = render_report(report)
+    assert "ẩn dải số" in rendered
+    assert "kỳ gần nhất trái hướng xu hướng cửa sổ" in rendered
+    assert "1.23–9.87" not in rendered

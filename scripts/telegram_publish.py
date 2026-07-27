@@ -43,6 +43,22 @@ def _latest_and_first(series: Iterable[dict[str, Any]]) -> tuple[float | None, f
     return float(values[-1]), float(values[0])
 
 
+def _numeric_point_count(series: Iterable[dict[str, Any]]) -> int:
+    return sum(
+        1
+        for item in series
+        if isinstance(item, dict) and isinstance(item.get("value"), (int, float))
+    )
+
+
+def _window_label(point_count: Any) -> str:
+    if isinstance(point_count, int) and point_count >= 4:
+        return "cửa sổ 4 kỳ"
+    if isinstance(point_count, int) and point_count >= 2:
+        return f"{point_count} kỳ có dữ liệu"
+    return "kỳ có dữ liệu"
+
+
 def _legacy_series(report: dict[str, Any], group: str, key: str) -> list[dict[str, Any]]:
     card = report.get(group, {}).get(key, {})
     values = card.get("values", [])
@@ -51,19 +67,23 @@ def _legacy_series(report: dict[str, Any], group: str, key: str) -> list[dict[st
 
 def extract_headlines(
     report: dict[str, Any], chart_data: dict[str, Any] | None = None
-) -> dict[str, float | None]:
+) -> dict[str, float | int | None]:
     """Extract headline metrics from both current and legacy report schemas."""
     sections = report.get("sections", {})
     if sections:
-        lnh = sections.get("lnh", {}).get("data_summary", {}).get("on_4w", [])
+        lnh_summary = sections.get("lnh", {}).get("data_summary", {})
+        lnh = lnh_summary.get("on_4w", [])
+        lnh_avg = lnh_summary.get("on_avg_4w", [])
         y10 = sections.get("lstp", {}).get("data_summary", {}).get("y10_4w", [])
         fx = sections.get("fx", {}).get("data_summary", {}).get("fx_mid_4w", [])
     else:
         lnh = _legacy_series(report, "group1_money_market", "interbank_on")
+        lnh_avg = []
         y10 = _legacy_series(report, "group2_bonds", "gov_10y_yield")
         fx = _legacy_series(report, "group3_fx_global", "fx_tm_mid")
 
     lnh_now, lnh_then = _latest_and_first(lnh)
+    lnh_avg_now, lnh_avg_then = _latest_and_first(lnh_avg)
     y10_now, y10_then = _latest_and_first(y10)
     fx_now, fx_then = _latest_and_first(fx)
     chart_data = chart_data or {}
@@ -87,18 +107,28 @@ def extract_headlines(
     ) if isinstance(dxy, list) else None
     return {
         "lnh_now": lnh_now,
+        "lnh_points": _numeric_point_count(lnh),
         "lnh_delta_bp": (
             (lnh_now - lnh_then) * 100
             if lnh_now is not None and lnh_then is not None
             else None
         ),
+        "lnh_avg_now": lnh_avg_now,
+        "lnh_avg_points": _numeric_point_count(lnh_avg),
+        "lnh_avg_delta_bp": (
+            (lnh_avg_now - lnh_avg_then) * 100
+            if lnh_avg_now is not None and lnh_avg_then is not None
+            else None
+        ),
         "y10_now": y10_now,
+        "y10_points": _numeric_point_count(y10),
         "y10_delta_bp": (
             (y10_now - y10_then) * 100
             if y10_now is not None and y10_then is not None
             else None
         ),
         "fx_now": fx_now,
+        "fx_points": _numeric_point_count(fx),
         "fx_delta_pct": (
             (fx_now - fx_then) / fx_then * 100
             if fx_now is not None and fx_then not in (None, 0)
@@ -115,7 +145,7 @@ def extract_neutral_indicators(report: dict[str, Any]) -> list[str]:
     lnh = sections.get("lnh", {}).get("data_summary", {})
     bonds = sections.get("lstp", {}).get("data_summary", {})
     fx = sections.get("fx", {}).get("data_summary", {})
-    on_now, _ = _latest_and_first(lnh.get("on_4w", []))
+    on_avg_now, _ = _latest_and_first(lnh.get("on_avg_4w", []))
     m1_now, _ = _latest_and_first(lnh.get("m1_4w", []))
     y2_now, _ = _latest_and_first(bonds.get("y2_4w", []))
     y10_now, _ = _latest_and_first(bonds.get("y10_4w", []))
@@ -125,9 +155,10 @@ def extract_neutral_indicators(report: dict[str, Any]) -> list[str]:
         if isinstance(item, dict) and isinstance(item.get("value"), (int, float))
     ]
     indicators = []
-    if on_now is not None and m1_now is not None:
+    if on_avg_now is not None and m1_now is not None:
         indicators.append(
-            f"Chênh lệch LNH 1 tháng–ON: {_format_signed((m1_now - on_now) * 100)} đcb"
+            "Chênh lệch LNH bình quân tuần SBV 1 tháng–ON: "
+            f"{_format_signed((m1_now - on_avg_now) * 100)} đcb"
         )
     if y2_now is not None and y10_now is not None:
         indicators.append(
@@ -176,17 +207,34 @@ def build_summary(
     if metrics["lnh_now"] is not None:
         detail = f"{_format_decimal(metrics['lnh_now'])}%"
         if metrics["lnh_delta_bp"] is not None:
-            detail += f" ({_format_signed(metrics['lnh_delta_bp'])} đcb/4 tuần)"
-        lines.append(f"💧 <b>LNH qua đêm:</b> {detail}")
+            detail += (
+                f" ({_format_signed(metrics['lnh_delta_bp'])} đcb/"
+                f"{_window_label(metrics['lnh_points'])})"
+            )
+        lines.append(f"💧 <b>LNH ON đóng cửa thứ Sáu (VBMA):</b> {detail}")
+    if metrics["lnh_avg_now"] is not None:
+        detail = f"{_format_decimal(metrics['lnh_avg_now'])}%"
+        if metrics["lnh_avg_delta_bp"] is not None:
+            detail += (
+                f" ({_format_signed(metrics['lnh_avg_delta_bp'])} đcb/"
+                f"{_window_label(metrics['lnh_avg_points'])})"
+            )
+        lines.append(f"〰️ <b>LNH ON bình quân tuần (SBV):</b> {detail}")
     if metrics["y10_now"] is not None:
         detail = f"{_format_decimal(metrics['y10_now'])}%"
         if metrics["y10_delta_bp"] is not None:
-            detail += f" ({_format_signed(metrics['y10_delta_bp'])} đcb/4 tuần)"
+            detail += (
+                f" ({_format_signed(metrics['y10_delta_bp'])} đcb/"
+                f"{_window_label(metrics['y10_points'])})"
+            )
         lines.append(f"📈 <b>LSTP 10 năm:</b> {detail}")
     if metrics["fx_now"] is not None:
         detail = _format_decimal(metrics["fx_now"], 0)
         if metrics["fx_delta_pct"] is not None:
-            detail += f" ({_format_signed(metrics['fx_delta_pct'], 2)}%/4 tuần)"
+            detail += (
+                f" ({_format_signed(metrics['fx_delta_pct'], 2)}%/"
+                f"{_window_label(metrics['fx_points'])})"
+            )
         lines.append(f"💱 <b>USD/VND:</b> {detail}")
     if metrics["us10y_now"] is not None:
         lines.append(f"🌐 <b>US 10Y:</b> {_format_decimal(metrics['us10y_now'])}%")
@@ -195,6 +243,33 @@ def build_summary(
     for indicator in extract_neutral_indicators(report):
         lines.append(f"• {html.escape(indicator)}")
 
+    analysis = report.get("analysis", {})
+    if isinstance(analysis, dict):
+        observed = analysis.get("observed_state") or analysis.get("scenario")
+        base_case = analysis.get("base_case")
+        if observed:
+            lines.extend(
+                [
+                    "",
+                    f"🔎 <b>Trạng thái quan sát:</b> {html.escape(str(observed))}",
+                ]
+            )
+        if base_case:
+            lines.append(
+                f"🧭 <b>Kịch bản mô hình tham khảo:</b> {html.escape(str(base_case))}"
+            )
+        confidence = analysis.get("confidence")
+        if confidence:
+            basis = analysis.get("confidence_basis")
+            detail = f" — {html.escape(str(basis))}" if basis else ""
+            lines.append(
+                f"Độ tin cậy mô hình: {html.escape(str(confidence))}{detail} "
+                "(không phải xác suất)."
+            )
+        balance_notes = analysis.get("balance_notes", [])
+        if isinstance(balance_notes, list) and balance_notes:
+            lines.append(f"⚖️ {html.escape(str(balance_notes[0]))}")
+
     cutoff = period.get("data_cutoff")
     if cutoff:
         lines.extend(["", f"🗓 <b>Chốt dữ liệu:</b> {html.escape(str(cutoff))}"])
@@ -202,22 +277,12 @@ def build_summary(
         [
             "✅ Báo cáo chỉ được phát sau khi vượt kiểm chứng dữ liệu và audit.",
             "",
-            "<i>Nội dung tổng hợp số liệu, không phải khuyến nghị đầu tư.</i>",
+            (
+                "<i>Dự báo là kịch bản có điều kiện; không chắc chắn sẽ được ghi rõ. "
+                "Nội dung không phải khuyến nghị đầu tư.</i>"
+            ),
         ]
     )
-    analysis = report.get("analysis", {})
-    scenario = analysis.get("scenario") if isinstance(analysis, dict) else None
-    if scenario:
-        lines.insert(
-            max(len(lines) - 3, 0),
-            f"🔎 <b>Ngoại suy thống kê 1–4 tuần:</b> {html.escape(str(scenario))}",
-        )
-        confidence = analysis.get("confidence")
-        if confidence:
-            lines.insert(
-                max(len(lines) - 3, 0),
-                f"Độ tin cậy mô hình: {html.escape(str(confidence))}",
-            )
     text = "\n".join(lines)
     if len(text) > TELEGRAM_TEXT_LIMIT:
         text = text[: TELEGRAM_TEXT_LIMIT - 1] + "…"
@@ -428,11 +493,17 @@ def _detail_messages(report: dict[str, Any]) -> list[str]:
     lines = ["📚 <b>Phân tích chi tiết</b>"]
     analysis = report.get("analysis", {})
     if isinstance(analysis, dict):
+        observed = analysis.get("observed_state") or analysis.get("scenario")
         lines.extend(
             [
                 "",
-                f"🔎 <b>Ngoại suy thống kê:</b> {html.escape(str(analysis.get('scenario', 'chưa đủ dữ liệu')))}",
-                f"Độ tin cậy mô hình: {html.escape(str(analysis.get('confidence', 'thấp')))}",
+                f"🔎 <b>Trạng thái quan sát:</b> {html.escape(str(observed or 'chưa đủ dữ liệu'))}",
+                f"🧭 <b>Kịch bản có điều kiện:</b> {html.escape(str(analysis.get('base_case', 'chưa công bố')))}",
+                (
+                    "Độ tin cậy mô hình: "
+                    f"{html.escape(str(analysis.get('confidence', 'thấp')))} "
+                    "(không phải xác suất)"
+                ),
             ]
         )
         for metric in analysis.get("metrics", []):
@@ -441,10 +512,16 @@ def _detail_messages(report: dict[str, Any]) -> list[str]:
             if not metric.get(
                 "show_numeric_forecast", metric.get("confidence") != "thấp"
             ):
+                status_reason = {
+                    "direction_conflict": "kỳ gần nhất trái hướng xu hướng cửa sổ",
+                    "insufficient_data": "chưa đủ 4 kỳ đã kiểm chứng",
+                    "low_confidence": "độ phù hợp thống kê dưới ngưỡng",
+                }.get(str(metric.get("forecast_status")), "độ tin cậy thấp")
                 lines.append(
                     f"• <b>{html.escape(str(metric.get('label')))}:</b> "
                     f"{html.escape(str(metric.get('signal')))} so với kỳ liền trước; "
-                    "không hiển thị ngoại suy số do độ tin cậy thấp"
+                    f"ẩn dải số vì {html.escape(status_reason)}. "
+                    f"{html.escape(str(metric.get('neutral_assessment', '')))}"
                 )
                 continue
             four_week = metric.get("forecasts", {}).get("4w", {})
@@ -455,8 +532,17 @@ def _detail_messages(report: dict[str, Any]) -> list[str]:
                 f"{html.escape(str(metric.get('signal')))} so với kỳ liền trước; "
                 f"dải ngoại suy sau 4 tuần: {html.escape(str(four_week.get('low')))}–"
                 f"{html.escape(str(four_week.get('high')))}{html.escape(suffix)} "
-                f"(tin cậy {html.escape(str(metric.get('confidence')))})"
+                f"(tin cậy {html.escape(str(metric.get('confidence')))}). "
+                f"{html.escape(str(metric.get('neutral_assessment', '')))}"
             )
+        confirmations = analysis.get("confirmation_conditions", [])
+        invalidations = analysis.get("invalidation_conditions", [])
+        if isinstance(confirmations, list) and confirmations:
+            lines.extend(["", "<b>Điều kiện xác nhận</b>"])
+            lines.extend(f"• {html.escape(str(item))}" for item in confirmations)
+        if isinstance(invalidations, list) and invalidations:
+            lines.extend(["", "<b>Điều kiện làm kịch bản mất hiệu lực</b>"])
+            lines.extend(f"• {html.escape(str(item))}" for item in invalidations)
 
     section_labels = {
         "lnh": "LNH & OMO",

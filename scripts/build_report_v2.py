@@ -116,12 +116,23 @@ def generate_lnh_prose(sbv_data_4w: list[dict], vbma_data: object, target_week: 
         tb5 = on_vbma.get("tb5")
         wow_bp = on_vbma.get("wow_bp")
         mom_bp = on_vbma.get("mom_bp")
+        w1_now = w1_values[-1] if w1_values else None
+        w1_previous = w1_values[-2] if len(w1_values) >= 2 else None
+        w1_change_bp = (
+            (w1_now - w1_previous) * 100
+            if w1_now is not None and w1_previous is not None
+            else None
+        )
+        w1_detail = (
+            f"LNH 1 tuần bình quân SBV ở mức {w1_now}%, "
+            f"{fmt_bp(w1_change_bp)} so với tuần trước ({w1_previous}%)."
+            if w1_now is not None and w1_previous is not None
+            else "Chưa đủ hai kỳ LNH 1 tuần bình quân SBV để tính thay đổi."
+        )
         w26_detail = (
             f"Theo VBMA, LNH ON ngày {cutoff_label} đóng cửa ở mức {close}% (bình quân 5 ngày {tb5}%), "
             f"{fmt_bp(wow_bp)} so với tuần trước và {fmt_bp(mom_bp)} so với tháng trước. "
-            f"Lãi suất kỳ hạn 1 tuần dao động mạnh: kỳ hạn cuối đạt {w1_values[-1]}%, "
-            f"{'tăng vọt' if w1_values[-1] and w1_values[-2] and w1_values[-1] > w1_values[-2] * 1.1 else 'ổn định'} "
-            f"so với tuần trước ({w1_values[-2]}%)."
+            f"{w1_detail}"
         )
 
     # === Doanh số giao dịch (cần từ VBMA) ===
@@ -156,24 +167,43 @@ def generate_lstp_prose(vbma_4w: list, vnba: dict, target_week: str = '2026-W26'
 
     # Yield curve trend
     y10_now, y10_then = y10_values[-1], y10_values[0]
-    y10_delta_bp = (y10_now - y10_then) * 100 if (y10_now and y10_then) else None
-    curve_dir = "dịch lên" if (y10_delta_bp and y10_delta_bp > 0) else "dịch xuống"
+    y10_delta_bp = (
+        (y10_now - y10_then) * 100
+        if y10_now is not None and y10_then is not None
+        else None
+    )
 
     # Slope 10Y-2Y
     slope_now = (y10_values[-1] - y2_values[-1]) * 100 if (y10_values[-1] and y2_values[-1]) else None
     slope_then = (y10_values[0] - y2_values[0]) * 100 if (y10_values[0] and y2_values[0]) else None
 
-    overview = (
-        f"Đường cong lợi suất trái phiếu Chính phủ (TPCP) {curve_dir} đều toàn kỳ hạn trong 4 tuần. "
-        f"LSTP 10 năm tăng từ {y10_then}% (đầu kỳ) lên {y10_now}% (cuối kỳ) — {fmt_bp(y10_delta_bp)} trong kỳ. "
-    )
+    if y10_delta_bp is None:
+        overview = "Chưa đủ hai kỳ LSTP 10 năm đã kiểm chứng để tính thay đổi. "
+    else:
+        y10_direction = (
+            "tăng" if y10_delta_bp > 0 else "giảm" if y10_delta_bp < 0 else "không đổi"
+        )
+        overview = (
+            f"LSTP 10 năm {y10_direction} từ {y10_then}% (đầu kỳ) đến "
+            f"{y10_now}% (cuối kỳ) — {fmt_bp(y10_delta_bp)} trong cửa sổ. "
+        )
     if slope_now is not None and slope_then is not None:
+        slope_shape = (
+            "dương (10Y cao hơn 2Y)"
+            if slope_now > 0
+            else "âm (10Y thấp hơn 2Y)"
+            if slope_now < 0
+            else "bằng 0"
+        )
+        slope_change = (
+            "tăng" if slope_now > slope_then else "giảm" if slope_now < slope_then else "không đổi"
+        )
         overview += (
-            f"Slope 10Y-2Y ở mức {slope_now:.0f}bp ({'mở rộng' if slope_now > slope_then else 'thu hẹp'} "
-            f"từ {slope_then:.0f}bp), cho thấy curve vẫn bình thường — không inversion."
+            f"Chênh lệch 10Y–2Y là {slope_now:.0f}bp, {slope_change} từ "
+            f"{slope_then:.0f}bp; hình dạng quan sát: {slope_shape}."
         )
     else:
-        overview += "Curve giữ hình thái bình thường."
+        overview += "Chưa đủ dữ liệu 2Y và 10Y để tính độ dốc."
 
     # W26 chi tiết — toàn bộ yield curve
     vbma_w26 = vbma_4w[-1]
@@ -243,7 +273,9 @@ def generate_fx_prose(sbv_4w: list, vbma_w26, vnba_w26, target_week: str = '2026
             + (f", biến động {fx_pct:+.2f}% trong 4 tuần." if fx_pct is not None else ".")
         )
     else:
-        overview_parts.append("Tỷ giá USD/VND ổn định.")
+        overview_parts.append(
+            "Chưa đủ hai kỳ USD/VND thương mại để tính biến động; không suy diễn mức thay đổi."
+        )
     if dxy:
         overview_parts.append(f"DXY ở mức {dxy}.")
     overview = " ".join(overview_parts)
@@ -285,7 +317,6 @@ def generate_global_prose(vnba_w26) -> dict:
         eq_parts = []
         for name, d in list(eq.items())[:5]:
             wow = d.get("wow_pct", 0)
-            emoji = "🟢" if wow > 0 else "🔴"
             eq_parts.append(f"{name} {fmt_pct(wow)}")
         eq_text = f"Chỉ số CK toàn cầu (WoW): {', '.join(eq_parts)}."
 
@@ -301,7 +332,20 @@ def generate_global_prose(vnba_w26) -> dict:
         comm_parts = [f"{k} {v:,.2f}" for k, v in comm.items()]
         comm_text = f"Hàng hóa: {', '.join(comm_parts)}."
 
-    overview = f"Tuần báo cáo thị trường toàn cầu {('hồi phục nhẹ' if eq and any(d.get('wow_pct', 0) > 0 for d in eq.values()) else 'điều chỉnh')}. " + " ".join(filter(None, [cb_text, govy_text, eq_text, comm_text]))
+    if eq:
+        changes = [float(d.get("wow_pct", 0)) for d in eq.values()]
+        rising = sum(value > 0 for value in changes)
+        falling = sum(value < 0 for value in changes)
+        unchanged = len(changes) - rising - falling
+        market_count = (
+            f"Trong các chỉ số có dữ liệu: {rising} tăng, {falling} giảm, "
+            f"{unchanged} không đổi. "
+        )
+    else:
+        market_count = "Chưa có dữ liệu chỉ số chứng khoán toàn cầu. "
+    overview = market_count + " ".join(
+        filter(None, [cb_text, govy_text, eq_text, comm_text])
+    )
 
     return {
         "title": "Bối cảnh Toàn cầu",
@@ -335,7 +379,10 @@ def generate_vn_prose(vnba_w26) -> dict:
         bottom3 = sorted_banks[-3:]
         top_str = ", ".join([f"{t} {fmt_pct(d['yoy_pct'])}" for t, d in top3])
         bot_str = ", ".join([f"{t} {fmt_pct(d['yoy_pct'])}" for t, d in bottom3])
-        bank_text = f"Lợi nhuận ngân hàng Q2/2026 (dự báo): Top tăng trưởng — {top_str}. Yếu nhất — {bot_str}."
+        bank_text = (
+            "Lợi nhuận ngân hàng Q2/2026 theo bảng dự báo của nguồn: "
+            f"3 mức YoY cao nhất — {top_str}; 3 mức YoY thấp nhất — {bot_str}."
+        )
 
     gold_text = ""
     if sjc_buy and sjc_sell:
@@ -420,36 +467,36 @@ def build_report_v2(cache_dir: Path, target_week: str) -> dict:
     global_prose = generate_global_prose(vnba_w26)
     vn_prose = generate_vn_prose(vnba_w26)
 
-    # Verdict
+    # Neutral state classification. Market rates are observations, not a
+    # direct or sufficient measure of the policy stance.
     on_values = [d.get("overnight") for d in sbv_4w]
     y10_values = [v.yields.get("10N") for v in vbma_4w]
-    on_delta = (on_values[-1] - on_values[0]) if (on_values[-1] and on_values[0]) else 0
-    y10_delta = (y10_values[-1] - y10_values[0]) if (y10_values[-1] and y10_values[0]) else 0
-    stance_score = 0
-    if on_delta < -0.5:
-        stance_score += 2
-    elif on_delta > 0.5:
-        stance_score -= 2
-    if y10_delta > 0.05:
-        stance_score -= 1
-    elif y10_delta < -0.05:
-        stance_score += 1
-
-    if stance_score >= 3:
-        verdict, verdict_short = "THUẬN (dovish)", "THUẬN"
-    elif stance_score >= 1:
-        verdict, verdict_short = "LƯỢNG (mild dovish)", "LƯỢNG"
-    elif stance_score <= -3:
-        verdict, verdict_short = "THẮN CHẶT (hawkish)", "THẮN CHẶT"
-    elif stance_score <= -1:
-        verdict, verdict_short = "THẮN CHẶT NHẸ", "THẮN CHẶT NHẸ"
+    on_delta = (
+        on_values[-1] - on_values[0]
+        if on_values[-1] is not None and on_values[0] is not None
+        else None
+    )
+    y10_delta = (
+        y10_values[-1] - y10_values[0]
+        if y10_values[-1] is not None and y10_values[0] is not None
+        else None
+    )
+    if on_delta is None or y10_delta is None:
+        verdict_short = "CHƯA ĐỦ DỮ LIỆU"
+    elif on_delta > 0 and y10_delta > 0:
+        verdict_short = "CÙNG TĂNG"
+    elif on_delta < 0 and y10_delta < 0:
+        verdict_short = "CÙNG GIẢM"
+    elif on_delta * y10_delta < 0:
+        verdict_short = "PHÂN KỲ"
     else:
-        verdict, verdict_short = "TRUNG TÍNH", "TRUNG TÍNH"
+        verdict_short = "CHƯA ĐỒNG THUẬN"
+    verdict = f"TRẠNG THÁI QUAN SÁT: {verdict_short}"
 
     verdict_reason = (
-        f"LNH ON {on_delta:+.2f}pp ({'dovish' if on_delta < 0 else 'hawkish'}), "
-        f"LSTP 10Y {y10_delta:+.2f}pp ({'dovish' if y10_delta < 0 else 'hawkish'}). "
-        f"Stance score: {stance_score}/6."
+        f"LNH ON bình quân tuần SBV {fmt_pct(on_delta, sign=True)}, "
+        f"LSTP 10Y {fmt_pct(y10_delta, sign=True)} trong cửa sổ. "
+        "Phân loại chỉ mô tả hướng số liệu, không suy ra trực tiếp trạng thái chính sách."
     )
 
     # Compute cutoff date from target week's Friday
@@ -466,7 +513,8 @@ def build_report_v2(cache_dir: Path, target_week: str) -> dict:
         "verdict": verdict_short,
         "verdict_full": verdict,
         "verdict_reason": verdict_reason,
-        "stance_score": stance_score,
+        "stance_score": None,
+        "state_classification": verdict_short,
         "sections": {
             "lnh": lnh_prose,
             "lstp": lstp_prose,
@@ -501,7 +549,7 @@ def main():
     report = build_report_v2(Path(args.cache), args.week)
     Path(args.out).write_text(json.dumps(report, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
     print(f"Built v2: {args.out}")
-    print(f"Verdict: {report['verdict']} (stance {report['stance_score']})")
+    print(f"Observed state: {report['verdict']}")
     sections = report["sections"]
     print(f"Sections: {list(sections.keys())}")
     for k, v in sections.items():

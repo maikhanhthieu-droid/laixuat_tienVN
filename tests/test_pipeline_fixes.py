@@ -3,11 +3,13 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 SCRIPTS = Path(__file__).parents[1] / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 from extract_cards import parse_sbv_interbank_real
+from build_report_v2 import generate_fx_prose, generate_lnh_prose, generate_lstp_prose
 from run_pipeline import rolling_weeks
 from verify_data import verify_report_v2
 
@@ -98,3 +100,61 @@ def test_verify_v2_compares_curve_to_latest_requested_week(tmp_path):
     assert len(curve_results) == 9
     assert all(result.week == "W28" for result in curve_results)
     assert all(result.status == "OK" for result in curve_results)
+
+
+def test_lnh_narrative_reports_numeric_change_without_value_judgment():
+    sbv = [
+        {"overnight": 4.0, "one_week": 4.5, "one_month": 5.0},
+        {"overnight": 4.1, "one_week": 4.8, "one_month": 5.1},
+        {"overnight": 4.2, "one_week": 5.0, "one_month": 5.2},
+        {"overnight": 4.3, "one_week": 6.0, "one_month": 5.3},
+    ]
+    vbma = [
+        SimpleNamespace(
+            interbank={
+                "ON": {
+                    "close": 3.5 + index * 0.1,
+                    "tb5": 3.5 + index * 0.1,
+                    "wow_bp": 10,
+                    "mom_bp": 30,
+                }
+            },
+            omo_outstanding=None,
+        )
+        for index in range(4)
+    ]
+    section = generate_lnh_prose(sbv, vbma, "2026-W28")
+    detail = section["w26_detail"]
+    assert "LNH 1 tuần bình quân SBV" in detail
+    assert "+100bp so với tuần trước" in detail
+    assert "tăng vọt" not in detail
+
+
+def test_bond_narrative_uses_observed_direction_and_shape():
+    vbma = []
+    for index in range(4):
+        vbma.append(
+            SimpleNamespace(
+                yields={
+                    "2N": 3.50 - index * 0.02,
+                    "5N": 4.20 - index * 0.05,
+                    "10N": 4.40 - index * 0.10,
+                },
+                yields_wow_bp={},
+                auction={},
+                secondary_total=0,
+                foreign_net_sell_week=0,
+                foreign_net_sell_ytd=0,
+            )
+        )
+    section = generate_lstp_prose(vbma, {}, "2026-W28")
+    assert "LSTP 10 năm giảm" in section["overview"]
+    assert "hình dạng quan sát" in section["overview"]
+    assert "bình thường" not in section["overview"]
+
+
+def test_missing_fx_is_not_reported_as_stable():
+    sbv = [{}, {}, {}, {}]
+    section = generate_fx_prose(sbv, None, None, "2026-W28")
+    assert "Chưa đủ hai kỳ USD/VND" in section["overview"]
+    assert "ổn định" not in section["overview"]
