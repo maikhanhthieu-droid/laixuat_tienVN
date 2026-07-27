@@ -1,7 +1,7 @@
 {
   "schema_version": "vn-rates.facts.v1",
   "producer": "maikhanhthieu-droid/laixuat_tienVN",
-  "generated_at": "2026-07-27T05:45:46.541300+00:00",
+  "generated_at": "2026-07-27T06:52:18.841105+00:00",
   "as_of": "2026-07-24",
   "status": "ok",
   "facts": {
