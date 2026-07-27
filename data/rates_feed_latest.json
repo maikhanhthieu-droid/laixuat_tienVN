@@ -1,15 +1,51 @@
 {
   "schema_version": "vn-rates.facts.v1",
   "producer": "maikhanhthieu-droid/laixuat_tienVN",
-  "generated_at": null,
-  "as_of": null,
-  "status": "missing",
-  "facts": {},
+  "generated_at": "2026-07-27T05:45:46.541300+00:00",
+  "as_of": "2026-07-24",
+  "status": "ok",
+  "facts": {
+    "interbank_overnight_close": {
+      "value": 3.87,
+      "unit": "percent",
+      "definition": "VBMA Friday close",
+      "as_of": "2026-07-24",
+      "source": "VBMA",
+      "source_artifact": "vbma_W30.txt",
+      "status": "ok"
+    },
+    "interbank_overnight_weekly_average": {
+      "value": 4.1,
+      "unit": "percent",
+      "definition": "SBV weekly average",
+      "as_of": "2026-07-24",
+      "source": "SBV",
+      "source_artifact": "sbv_2026-W30.txt",
+      "status": "ok"
+    },
+    "government_bond_10y": {
+      "value": 4.4,
+      "unit": "percent",
+      "definition": "VBMA secondary-market 10-year yield",
+      "as_of": "2026-07-24",
+      "source": "VBMA",
+      "source_artifact": "vbma_W30.txt",
+      "status": "ok"
+    },
+    "usd_vnd_commercial_mid": {
+      "value": 26270.0,
+      "unit": "VND_per_USD",
+      "definition": "Midpoint of SBV-reported commercial-bank range",
+      "as_of": "2026-07-24",
+      "source": "SBV",
+      "source_artifact": "sbv_2026-W30.txt",
+      "status": "ok"
+    }
+  },
   "quality": {
     "facts_only": true,
     "forecasts_included": false,
     "ai_output_included": false,
-    "verification_required_before_export": true,
-    "note": "Placeholder only; the verified weekly pipeline replaces this file."
+    "verification_required_before_export": true
   }
 }
