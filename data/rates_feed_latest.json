@@ -1,44 +1,44 @@
 {
   "schema_version": "vn-rates.facts.v1",
   "producer": "maikhanhthieu-droid/laixuat_tienVN",
-  "generated_at": "2026-07-27T06:52:18.841105+00:00",
-  "as_of": "2026-07-24",
+  "generated_at": "2026-08-23T09:02:56.686104+00:00",
+  "as_of": "2026-08-14",
   "status": "ok",
   "facts": {
     "interbank_overnight_close": {
-      "value": 3.87,
+      "value": 4.91,
       "unit": "percent",
       "definition": "VBMA Friday close",
-      "as_of": "2026-07-24",
+      "as_of": "2026-08-14",
       "source": "VBMA",
-      "source_artifact": "vbma_W30.txt",
+      "source_artifact": "vbma_W33.txt",
       "status": "ok"
     },
     "interbank_overnight_weekly_average": {
-      "value": 4.1,
+      "value": 5.01,
       "unit": "percent",
       "definition": "SBV weekly average",
-      "as_of": "2026-07-24",
+      "as_of": "2026-08-14",
       "source": "SBV",
-      "source_artifact": "sbv_2026-W30.txt",
+      "source_artifact": "sbv_2026-W33.txt",
       "status": "ok"
     },
     "government_bond_10y": {
-      "value": 4.4,
+      "value": 4.42,
       "unit": "percent",
       "definition": "VBMA secondary-market 10-year yield",
-      "as_of": "2026-07-24",
+      "as_of": "2026-08-14",
       "source": "VBMA",
-      "source_artifact": "vbma_W30.txt",
+      "source_artifact": "vbma_W33.txt",
       "status": "ok"
     },
     "usd_vnd_commercial_mid": {
-      "value": 26270.0,
+      "value": 26160.0,
       "unit": "VND_per_USD",
       "definition": "Midpoint of SBV-reported commercial-bank range",
-      "as_of": "2026-07-24",
+      "as_of": "2026-08-14",
       "source": "SBV",
-      "source_artifact": "sbv_2026-W30.txt",
+      "source_artifact": "sbv_2026-W33.txt",
       "status": "ok"
     }
   },
