@@ -6,7 +6,7 @@ re-parse từng file .txt nguồn (độc lập với build_report.py), và đ�
 FAIL criteria (exit 1):
   - Bất kỳ số nào lệch > 0.5% so với source gốc
   - Source file thiếu (number trong report nhưng không trace được)
-  - Cross-check SBV vs VBMA cho LNH lệch > 5bp
+  - Cross-check SBV vs VBMA cho LNH lệch > 5bp (warning only: definitions differ)
 
 Usage:
   python3 verify_data.py --report report.json --cache sources_cache/
@@ -36,8 +36,22 @@ class VerifyResult:
     source_file: str
     source_excerpt: str  # 80 chars context từ PDF gốc
     delta_pct: Optional[float]  # % deviation
-    status: str  # "OK" | "MISMATCH" | "MISSING_SOURCE" | "NULL_REPORTED"
+    status: str  # "OK" | "WARNING" | "MISMATCH" | "MISSING_SOURCE" | "NULL_REPORTED"
     detail: str = ""
+
+
+LNH_CROSSCHECK_WARNING_BP = 5.0
+
+
+def classify_lnh_crosscheck(delta_bp: float) -> str:
+    """Classify a cross-source spread without treating it as a bad report.
+
+    SBV publishes a weekly average while VBMA publishes a five-day average;
+    both are useful checks but are not identical observations. A spread over
+    the historical alert threshold is therefore a warning, not a source/data
+    mismatch that should block publication.
+    """
+    return "WARNING" if delta_bp > LNH_CROSSCHECK_WARNING_BP else "OK"
 
 
 def parse_sbv_lnh(text: str) -> dict:
@@ -238,11 +252,14 @@ def verify_report(report_path: Path, cache_dir: Path, strict: bool = False) -> l
             continue
         delta_bp = abs(sbv_lnh - vbma_tb5) * 100
         excerpt = excerpt_around(vbma_text, r"^\s*ON\s+(\d+\.\d+)", 60)
-        if delta_bp > 5:
-            status = "MISMATCH"
-            detail = f"Cross-check FAIL: SBV ON={sbv_lnh} vs VBMA TB5={vbma_tb5}, Δ={delta_bp:.1f}bp > 5bp"
+        status = classify_lnh_crosscheck(delta_bp)
+        if status == "WARNING":
+            detail = (
+                f"Cross-check warning: SBV weekly average={sbv_lnh} vs "
+                f"VBMA 5-day average={vbma_tb5}, Δ={delta_bp:.1f}bp; "
+                "different averaging windows, publication is not blocked"
+            )
         else:
-            status = "OK"
             detail = f"Cross-check OK: SBV={sbv_lnh} vs VBMA TB5={vbma_tb5}, Δ={delta_bp:.1f}bp"
         results.append(VerifyResult("crosscheck_lnh_on", week_short,
             sbv_lnh, vbma_tb5, f"{sbv_file.name}+{vbma_file.name}", excerpt,
@@ -289,6 +306,11 @@ def verify_report_v2(report_path: Path, cache_dir: Path, strict: bool = False) -
         week_short = week.split("-")[-1]
         sbv_file = cache_dir / f"sbv_{week}.txt"
         if not sbv_file.exists():
+            for key in ("lnh_on_weekly_avg", "lnh_1w", "lnh_1m"):
+                results.append(VerifyResult(
+                    key, week_short, None, None, sbv_file.name, "", None,
+                    "MISSING_SOURCE", f"Required SBV file missing: {sbv_file.name}"
+                ))
             continue
         text = sbv_file.read_text(encoding="utf-8", errors="ignore")
         truth_lnh = parse_sbv_lnh(text)
@@ -309,6 +331,11 @@ def verify_report_v2(report_path: Path, cache_dir: Path, strict: bool = False) -
         week_short = week.split("-")[-1]
         vbma_file = cache_dir / f"vbma_{week_short}.txt"
         if not vbma_file.exists():
+            for key in ("lnh_on_friday_close",):
+                results.append(VerifyResult(
+                    key, week_short, None, None, vbma_file.name, "", None,
+                    "MISSING_SOURCE", f"Required VBMA file missing: {vbma_file.name}"
+                ))
             continue
         text = vbma_file.read_text(encoding="utf-8", errors="ignore")
         truth = parse_vbma_lnh_tb5(text).get("on_close")
@@ -338,6 +365,11 @@ def verify_report_v2(report_path: Path, cache_dir: Path, strict: bool = False) -
         week_short = week.split("-")[-1]
         vbma_file = cache_dir / f"vbma_{week_short}.txt"
         if not vbma_file.exists():
+            for key in ("lstp_2y", "lstp_5y", "lstp_10y"):
+                results.append(VerifyResult(
+                    key, week_short, None, None, vbma_file.name, "", None,
+                    "MISSING_SOURCE", f"Required VBMA file missing: {vbma_file.name}"
+                ))
             continue
         text = vbma_file.read_text(encoding="utf-8", errors="ignore")
         truth_yields = parse_vbma_yield_table(text)
@@ -357,6 +389,10 @@ def verify_report_v2(report_path: Path, cache_dir: Path, strict: bool = False) -
         week_short = week.split("-")[-1]
         sbv_file = cache_dir / f"sbv_{week}.txt"
         if not sbv_file.exists():
+            results.append(VerifyResult(
+                "fx_tm_mid", week_short, None, None, sbv_file.name, "", None,
+                "MISSING_SOURCE", f"Required SBV file missing: {sbv_file.name}"
+            ))
             continue
         text = sbv_file.read_text(encoding="utf-8", errors="ignore")
         truth_fx = parse_sbv_fx(text)
@@ -428,11 +464,14 @@ def verify_report_v2(report_path: Path, cache_dir: Path, strict: bool = False) -
         if sbv_lnh is None or vbma_tb5 is None:
             continue
         delta_bp = abs(sbv_lnh - vbma_tb5) * 100
-        if delta_bp > 5:
-            status = "MISMATCH"
-            detail = f"Cross-check FAIL: SBV={sbv_lnh} vs VBMA TB5={vbma_tb5}, Δ={delta_bp:.1f}bp"
+        status = classify_lnh_crosscheck(delta_bp)
+        if status == "WARNING":
+            detail = (
+                f"Cross-check warning: SBV weekly average={sbv_lnh} vs "
+                f"VBMA 5-day average={vbma_tb5}, Δ={delta_bp:.1f}bp; "
+                "different averaging windows, publication is not blocked"
+            )
         else:
-            status = "OK"
             detail = f"Cross-check OK: SBV={sbv_lnh} vs VBMA TB5={vbma_tb5}, Δ={delta_bp:.1f}bp"
         results.append(VerifyResult("crosscheck_lnh", week_short, sbv_lnh, vbma_tb5,
             f"{sbv_file.name}+{vbma_file.name}", "", delta_bp, status, detail))
@@ -459,6 +498,7 @@ def main():
 
     # Report
     ok = [r for r in results if r.status == "OK"]
+    warnings = [r for r in results if r.status == "WARNING"]
     fails = [r for r in results if r.status in ("MISMATCH", "MISSING_SOURCE", "NULL_REPORTED")]
 
     print("=" * 78)
@@ -468,13 +508,13 @@ def main():
     print(f"{'Status':<8} {'Card':<22} {'Week':<6} {'Reported':<12} {'Truth':<12} {'Δ%':<8} {'Source'}")
     print("-" * 78)
     for r in results:
-        symbol = {"OK": "✅", "MISMATCH": "❌", "MISSING_SOURCE": "⚠️", "NULL_REPORTED": "⚠️"}[r.status]
+        symbol = {"OK": "✅", "WARNING": "⚠️", "MISMATCH": "❌", "MISSING_SOURCE": "⚠️", "NULL_REPORTED": "⚠️"}[r.status]
         rep_str = f"{r.reported}" if r.reported is not None else "NULL"
         tru_str = f"{r.truth}" if r.truth is not None else "NULL"
         delta_str = f"{r.delta_pct:.3f}" if r.delta_pct is not None else "—"
         print(f"{symbol:<8} {r.card_key:<22} {r.week:<6} {rep_str:<12} {tru_str:<12} {delta_str:<8} {r.source_file}")
     print("-" * 78)
-    print(f"\n✅ OK: {len(ok)}/{len(results)}")
+    print(f"\n✅ OK: {len(ok)}/{len(results)} | ⚠️ warnings: {len(warnings)}")
 
     if fails:
         print(f"\n❌ FAILURES ({len(fails)}):")

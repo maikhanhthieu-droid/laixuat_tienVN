@@ -46,7 +46,14 @@ def run(cmd: list[str], desc: str) -> bool:
     """Run subprocess, return True if success."""
     print(f"  → {' '.join(cmd[:4])}...")
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=300,
+        )
     except subprocess.TimeoutExpired:
         print(f"  ❌ {desc} FAILED (timeout after 300s)")
         return False
@@ -195,7 +202,8 @@ def fetch_pdfs(week: str, cache_dir: Path) -> bool:
                     f"SBV {w}"
                 )
                 if not ok:
-                    print(f"\n⚠️ SBV {w} fetch failed — continuing")
+                    print(f"\n❌ SBV {w} fetch failed — required source is missing")
+                    return False
 
         # 2. Fetch VBMA for missing weeks using by_weeks
         missing_vbma = [w for w in missing if not (cache_dir / f"vbma_{w.split('-')[-1]}.txt").exists()]
@@ -211,6 +219,19 @@ def fetch_pdfs(week: str, cache_dir: Path) -> bool:
             print(f"\n  → VNBA {len(missing_vnba)} week(s)...")
             from fetch_sources import fetch_vnba_by_weeks
             fetch_vnba_by_weeks(cache_dir, missing_vnba)
+
+    # SBV and VBMA are required for the verified rate series. VNBA is an
+    # optional context source, but publishing without the primary rate files
+    # would silently produce a partial report.
+    required_missing = []
+    for w in target_weeks:
+        if not (cache_dir / f"sbv_{w}.txt").exists():
+            required_missing.append(f"sbv_{w}.txt")
+        if not (cache_dir / f"vbma_{w.split('-')[-1]}.txt").exists():
+            required_missing.append(f"vbma_{w.split('-')[-1]}.txt")
+    if required_missing:
+        print(f"\n❌ Required source files missing: {', '.join(required_missing)}")
+        return False
 
     # Cleanup: remove weeks older than 5
     cutoff_week = week_num - 5

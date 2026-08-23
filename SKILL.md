@@ -357,7 +357,7 @@ python3 scripts/verify_data.py \
 **FAIL criteria (exit 1 → DỪNG, không render)**:
 - Bất kỳ số nào lệch > 0.5% so với source gốc
 - Source file thiếu (number trong report nhưng không trace được)
-- Cross-check SBV LNH vs VBMA TB 5 ngày lệch > 5bp
+- Cross-check SBV LNH vs VBMA TB 5 ngày lệch > 5bp chỉ tạo cảnh báo; không chặn publish vì hai nguồn dùng định nghĩa bình quân khác nhau
 
 **Verdict**:
 - `✅ VERIFICATION PASSED` → tiếp tục Bước 4

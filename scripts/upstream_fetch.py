@@ -13,12 +13,17 @@ import json
 import os
 import re
 import ssl
+import sys
 import time
 import urllib.request
 import urllib.parse
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Optional
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 # SSL context — Bond Lab uses httpx+certifi/truststore.
 # HNX cert chain không có intermediate trong certifi → cần unverified fallback.

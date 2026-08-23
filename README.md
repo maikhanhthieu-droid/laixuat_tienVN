@@ -47,7 +47,7 @@ Bước 1: Pre-flight (check sources available)
 Bước 2: Fetch PDFs (rolling cache — chỉ fetch tuần mới)
 Bước 3: Fetch upstream (HNX yield curve + auction + FRED)
 Bước 4: Build report.json (extract + data-driven narrative)
-Bước 5: Verify data (45+ points cross-check, exit 1 nếu mismatch)
+Bước 5: Verify data (45+ points cross-check; exit 1 nếu số liệu sai hoặc thiếu source bắt buộc)
 Bước 6: Render HTML data-driven (charts + narrative từ `report.json` và `chart_data.json`)
 Bước 7: Audit gates (HTML structure + JS + banned words)
 Bước 8 (tùy chọn): Publish Telegram sau khi 7 gate trước đã pass
@@ -109,11 +109,11 @@ Nếu bất kỳ gate fail → pipeline exit 1, không publish.
 ## Verify dữ liệu
 
 Pipeline tự động cross-check:
-- SBV bình quân tuần vs VBMA bình quân 5 ngày (Δ ≤ 5 đcb)
+- SBV bình quân tuần vs VBMA bình quân 5 ngày (Δ > 5 đcb → cảnh báo; hai nguồn dùng cửa sổ bình quân khác nhau)
 - HNX par yield vs VBMA trading yield (Δ ≤ 5 đcb)
 - HNX auction win% vs VBMA báo cáo (Δ ≤ 1%)
 
-45+ số liệu verified mỗi lần chạy.
+45+ số liệu verified mỗi lần chạy. Số liệu report/source sai hoặc thiếu SBV/VBMA bắt buộc sẽ làm pipeline dừng; cảnh báo cross-check không tự động chặn publish.
 
 ## Phân tích xu hướng 1–4 tuần
 

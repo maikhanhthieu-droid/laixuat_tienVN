@@ -5,13 +5,49 @@ import sys
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+
 SCRIPTS = Path(__file__).parents[1] / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 from extract_cards import parse_sbv_interbank_real
 from build_report_v2 import generate_fx_prose, generate_lnh_prose, generate_lstp_prose
+from fetch_sources import download_pdf
 from run_pipeline import rolling_weeks
-from verify_data import verify_report_v2
+from verify_data import classify_lnh_crosscheck, verify_report_v2
+
+
+def test_lnh_crosscheck_warns_for_different_average_definitions():
+    assert classify_lnh_crosscheck(5.0) == "OK"
+    assert classify_lnh_crosscheck(22.0) == "WARNING"
+
+
+def test_download_pdf_rejects_html_response(monkeypatch):
+    monkeypatch.setattr(
+        "fetch_sources.curl",
+        lambda *args, **kwargs: b"<html>Request Rejected</html>",
+    )
+    with pytest.raises(RuntimeError, match="response is not a PDF"):
+        download_pdf("https://example.invalid/report.pdf", retries=1)
+
+
+def test_v2_verification_reports_missing_required_sources(tmp_path):
+    report = {
+        "period": {"weeks_covered": ["2026-W32"]},
+        "sections": {
+            "lnh": {"data_summary": {}},
+            "lstp": {"data_summary": {}},
+            "fx": {"data_summary": {}},
+        },
+    }
+    report_path = tmp_path / "report.json"
+    cache = tmp_path / "cache"
+    cache.mkdir()
+    report_path.write_text(json.dumps(report), encoding="utf-8")
+
+    results = verify_report_v2(report_path, cache)
+
+    assert any(result.status == "MISSING_SOURCE" for result in results)
 
 
 def test_parse_real_sbv_table_and_fx_range():

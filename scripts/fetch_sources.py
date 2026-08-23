@@ -29,10 +29,15 @@ from pathlib import Path
 from typing import Optional
 from urllib.parse import quote
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 USER_AGENT = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
 )
+PDF_MAGIC = b"%PDF-"
 SBV_HEADERS = {
     "User-Agent": USER_AGENT,
     "Accept-Language": "vi,en;q=0.9",
@@ -100,6 +105,33 @@ def curl(url: str, headers: Optional[dict] = None, sleep_s: float = 0.0) -> byte
     return data
 
 
+def download_pdf(
+    url: str,
+    headers: Optional[dict] = None,
+    *,
+    retries: int = 3,
+    retry_delay_s: float = 1.5,
+) -> bytes:
+    """Download a PDF and reject WAF/error HTML masquerading as a PDF."""
+    last_error: Exception | None = None
+    for attempt in range(max(1, retries)):
+        try:
+            data = curl(url, headers=headers)
+            if data.startswith(PDF_MAGIC):
+                return data
+            preview = data[:120].decode("utf-8", errors="replace").replace("\n", " ")
+            raise ValueError(
+                f"response is not a PDF (bytes={len(data)}, preview={preview!r})"
+            )
+        except Exception as exc:
+            last_error = exc
+            if attempt + 1 < max(1, retries):
+                time.sleep(retry_delay_s * (attempt + 1))
+    raise RuntimeError(
+        f"PDF download failed after {max(1, retries)} attempts: {last_error}"
+    ) from last_error
+
+
 def pdftotext(pdf_path: Path, txt_path: Path) -> None:
     """Convert PDF to text via system pdftotext -layout."""
     subprocess.run(
@@ -130,7 +162,12 @@ def fetch_sbv_week(week: WeekRange, out_dir: Path) -> Optional[Path]:
     pdf_url = "https://www.sbv.gov.vn" + pdf_match.group(1)
     pdf_path = out_dir / f"sbv_{week.iso_week}.pdf"
     txt_path = out_dir / f"sbv_{week.iso_week}.txt"
-    pdf_path.write_bytes(curl(pdf_url, headers=SBV_HEADERS))
+    pdf_headers = {
+        **SBV_HEADERS,
+        "Accept": "application/pdf,*/*",
+        "Referer": article_url,
+    }
+    pdf_path.write_bytes(download_pdf(pdf_url, headers=pdf_headers))
     pdftotext(pdf_path, txt_path)
     return txt_path
 
@@ -178,7 +215,7 @@ def fetch_vbma_by_weeks(out_dir: Path, target_weeks: list) -> dict:
         tmp_pdf = out_dir / f"vbma_tmp_{len(results)}.pdf"
         tmp_txt = out_dir / f"vbma_tmp_{len(results)}.txt"
         try:
-            tmp_pdf.write_bytes(curl(pdf_url))
+            tmp_pdf.write_bytes(download_pdf(pdf_url))
             pdftotext(tmp_pdf, tmp_txt)
             text = tmp_txt.read_text(encoding="utf-8", errors="ignore")
             dates_found = re.findall(r"(\d{1,2})/(\d{1,2})/(\d{4})", text[:3000])
@@ -292,7 +329,7 @@ def fetch_vnba_by_weeks(out_dir: Path, target_weeks: list) -> dict:
             pdf_path = out_dir / f"vnba_tmp_{step}.pdf"
             txt_path = out_dir / f"vnba_tmp_{step}.txt"
             try:
-                pdf_path.write_bytes(curl(pdf_url))
+                pdf_path.write_bytes(download_pdf(pdf_url))
                 pdftotext(pdf_path, txt_path)
                 text = txt_path.read_text(encoding="utf-8", errors="ignore")
 
@@ -482,7 +519,7 @@ def fetch_vnba_recent(out_dir: Path, count: int = 4) -> dict:
             continue
 
         try:
-            pdf_path.write_bytes(curl(pdf_url))
+            pdf_path.write_bytes(download_pdf(pdf_url))
             pdftotext(pdf_path, txt_path)
             print(f"  VNBA {week_short}: fetched ({txt_path.stat().st_size:,} chars)")
             results[f"vnba_{week_short}"] = txt_path
@@ -529,13 +566,19 @@ def main():
         if args.sbv_only:
             weeks = [week for week in weeks if week.iso_week == args.week]
         print(f"Enumerated weeks: {[w.iso_week for w in weeks]}")
+        failed = False
         for w in weeks:
             try:
                 txt = fetch_sbv_week(w, out_dir)
                 status = txt.name if txt else "SKIP (holiday?)"
+                if args.sbv_only and txt is None:
+                    failed = True
             except Exception as e:
                 status = f"ERROR: {e}"
+                failed = True
             print(f"  SBV {w.iso_week}: {status}")
+        if args.sbv_only and failed:
+            raise SystemExit(1)
         if not args.sbv_only:
             try:
                 vbma = fetch_vbma_recent(out_dir)
