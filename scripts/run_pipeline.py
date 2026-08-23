@@ -25,6 +25,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -185,25 +186,29 @@ def fetch_pdfs(week: str, cache_dir: Path) -> bool:
         print("  ✅ All 4 weeks cached — skip fetch")
     else:
         # 1. Fetch SBV for missing weeks (already week-parameterized)
-        for w in missing:
-            w_short = w.split("-")[-1]
-            if not (cache_dir / f"sbv_{w}.txt").exists():
-                print(f"\n  → SBV {w}...")
-                ok = run(
-                    [
-                        sys.executable,
-                        str(SCRIPTS_DIR / "fetch_sources.py"),
-                        "--week",
-                        w,
-                        "--out",
-                        str(cache_dir),
-                        "--sbv-only",
-                    ],
-                    f"SBV {w}"
-                )
-                if not ok:
-                    print(f"\n❌ SBV {w} fetch failed — required source is missing")
-                    return False
+        missing_sbv = [
+            w for w in missing if not (cache_dir / f"sbv_{w}.txt").exists()
+        ]
+        for index, w in enumerate(missing_sbv):
+            print(f"\n  → SBV {w}...")
+            ok = run(
+                [
+                    sys.executable,
+                    str(SCRIPTS_DIR / "fetch_sources.py"),
+                    "--week",
+                    w,
+                    "--out",
+                    str(cache_dir),
+                    "--sbv-only",
+                ],
+                f"SBV {w}"
+            )
+            if not ok:
+                print(f"\n❌ SBV {w} fetch failed — required source is missing")
+                return False
+            if index + 1 < len(missing_sbv):
+                print("  ⏳ Waiting 10s before the next SBV request (WAF throttle)...")
+                time.sleep(10)
 
         # 2. Fetch VBMA for missing weeks using by_weeks
         missing_vbma = [w for w in missing if not (cache_dir / f"vbma_{w.split('-')[-1]}.txt").exists()]

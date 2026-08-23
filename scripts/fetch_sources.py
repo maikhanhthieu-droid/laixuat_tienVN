@@ -140,6 +140,20 @@ def pdftotext(pdf_path: Path, txt_path: Path) -> None:
     )
 
 
+def sbv_pdf_filename_candidates(week: WeekRange) -> list[str]:
+    """Return likely SBV document-library filenames for a reporting week."""
+    labels = [week.sbv_slug]
+    if (week.monday.year, week.monday.month) != (week.friday.year, week.friday.month):
+        labels.insert(
+            0,
+            (
+                f"{week.monday.day:02d}.{week.monday.month}-"
+                f"{week.friday.day:02d}.{week.friday.month}.{week.friday.year}"
+            ),
+        )
+    return list(dict.fromkeys(f"{label}.pdf" for label in labels))
+
+
 def fetch_sbv_week(week: WeekRange, out_dir: Path) -> Optional[Path]:
     """Fetch SBV weekly bulletin PDF → .txt. Returns None if week skipped (holiday).
 
@@ -148,26 +162,86 @@ def fetch_sbv_week(week: WeekRange, out_dir: Path) -> Optional[Path]:
     /vi/web/sbv_portal/w/ forms — we use the latter (canonical).
     """
     slug_vi = f"diễn-biến-thị-trường-ngoại-tệ-và-thị-trường-liên-ngân-hàng-tuần-từ-{week.sbv_slug}"
-    article_url = "https://www.sbv.gov.vn/vi/web/sbv_portal/w/" + quote(slug_vi)
-    try:
-        html = curl(article_url, headers=SBV_HEADERS, sleep_s=3).decode("utf-8", errors="ignore")
-    except urllib.error.HTTPError as e:
-        if e.code == 404:
-            return None  # holiday skip
-        raise
-    # The PDF URL is /documents/20117/0/{dates}.pdf/{uuid}?t=... — UUID mandatory.
-    pdf_match = re.search(r'(?:src|href)="(/documents/20117/0/[^"]+\.pdf/[^"]+)"', html)
-    if not pdf_match:
-        return None
-    pdf_url = "https://www.sbv.gov.vn" + pdf_match.group(1)
+    article_urls = [
+        "https://www.sbv.gov.vn/vi/web/sbv_portal/w/" + quote(slug_vi),
+        "https://www.sbv.gov.vn/vi/w/" + quote(slug_vi),
+    ]
     pdf_path = out_dir / f"sbv_{week.iso_week}.pdf"
     txt_path = out_dir / f"sbv_{week.iso_week}.txt"
     pdf_headers = {
         **SBV_HEADERS,
         "Accept": "application/pdf,*/*",
-        "Referer": article_url,
+        "Referer": article_urls[0],
     }
-    pdf_path.write_bytes(download_pdf(pdf_url, headers=pdf_headers))
+
+    # Liferay serves documents without the UUID suffix. Prefer that stable URL:
+    # it halves SBV requests and avoids the article-page WAF seen on CI runners.
+    pdf_data = None
+    direct_errors = []
+    for filename in sbv_pdf_filename_candidates(week):
+        direct_url = "https://www.sbv.gov.vn/documents/20117/0/" + quote(filename)
+        try:
+            pdf_data = download_pdf(
+                direct_url,
+                headers=pdf_headers,
+                retries=4,
+                retry_delay_s=10,
+            )
+            break
+        except RuntimeError as exc:
+            direct_errors.append(f"{filename}: {exc}")
+
+    # Fallback for any document whose library filename differs from the usual
+    # date convention. A 200 page with no PDF is treated as an error, not a
+    # holiday, because SBV's WAF also returns small rejection pages with 200.
+    article_errors = []
+    article_found = False
+    if pdf_data is None:
+        for article_url in article_urls:
+            try:
+                html = curl(article_url, headers=SBV_HEADERS, sleep_s=10).decode(
+                    "utf-8", errors="ignore"
+                )
+            except urllib.error.HTTPError as exc:
+                if exc.code == 404:
+                    continue
+                article_errors.append(f"{article_url}: HTTP {exc.code}")
+                continue
+            except Exception as exc:
+                article_errors.append(f"{article_url}: {exc}")
+                continue
+
+            article_found = True
+            pdf_match = re.search(
+                r'(?:src|href)="(/documents/20117/0/[^"]+\.pdf/[^"]+)"',
+                html,
+            )
+            if not pdf_match:
+                preview = html[:120].replace("\n", " ")
+                article_errors.append(
+                    f"{article_url}: no PDF link (bytes={len(html)}, preview={preview!r})"
+                )
+                continue
+
+            pdf_url = "https://www.sbv.gov.vn" + pdf_match.group(1)
+            try:
+                pdf_data = download_pdf(
+                    pdf_url,
+                    headers={**pdf_headers, "Referer": article_url},
+                    retries=4,
+                    retry_delay_s=10,
+                )
+                break
+            except RuntimeError as exc:
+                article_errors.append(f"{pdf_url}: {exc}")
+
+    if pdf_data is None:
+        if not article_found and not article_errors:
+            return None
+        details = "; ".join((direct_errors + article_errors)[-4:])
+        raise RuntimeError(f"SBV PDF unavailable for {week.iso_week}: {details}")
+
+    pdf_path.write_bytes(pdf_data)
     pdftotext(pdf_path, txt_path)
     return txt_path
 

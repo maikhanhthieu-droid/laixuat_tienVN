@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sys
+from datetime import date
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -12,7 +13,7 @@ sys.path.insert(0, str(SCRIPTS))
 
 from extract_cards import parse_sbv_interbank_real
 from build_report_v2 import generate_fx_prose, generate_lnh_prose, generate_lstp_prose
-from fetch_sources import download_pdf
+from fetch_sources import WeekRange, download_pdf, fetch_sbv_week
 from run_pipeline import rolling_weeks
 from verify_data import classify_lnh_crosscheck, verify_report_v2
 
@@ -29,6 +30,36 @@ def test_download_pdf_rejects_html_response(monkeypatch):
     )
     with pytest.raises(RuntimeError, match="response is not a PDF"):
         download_pdf("https://example.invalid/report.pdf", retries=1)
+
+
+def test_sbv_fetch_prefers_direct_document_url(monkeypatch, tmp_path):
+    week = WeekRange(
+        iso_week="2026-W32",
+        monday=date(2026, 8, 3),
+        friday=date(2026, 8, 7),
+    )
+    requested = []
+
+    def fake_download(url, headers=None, **kwargs):
+        requested.append(url)
+        return b"%PDF-test"
+
+    def fake_pdftotext(pdf_path, txt_path):
+        txt_path.write_text("SBV fixture", encoding="utf-8")
+
+    monkeypatch.setattr("fetch_sources.download_pdf", fake_download)
+    monkeypatch.setattr("fetch_sources.pdftotext", fake_pdftotext)
+    monkeypatch.setattr(
+        "fetch_sources.curl",
+        lambda *args, **kwargs: pytest.fail("article page should not be requested"),
+    )
+
+    result = fetch_sbv_week(week, tmp_path)
+
+    assert result == tmp_path / "sbv_2026-W32.txt"
+    assert requested == [
+        "https://www.sbv.gov.vn/documents/20117/0/03-07.8.2026.pdf"
+    ]
 
 
 def test_v2_verification_reports_missing_required_sources(tmp_path):

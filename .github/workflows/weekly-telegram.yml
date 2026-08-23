@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TZ: Asia/Bangkok
+      PYTHONUNBUFFERED: "1"
       FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -49,6 +50,7 @@ jobs:
           key: weekly-state-${{ github.ref_name }}-${{ github.run_number }}
           restore-keys: |
             weekly-state-${{ github.ref_name }}-
+          save-always: true
 
       - name: Run, audit and publish
         run: |
