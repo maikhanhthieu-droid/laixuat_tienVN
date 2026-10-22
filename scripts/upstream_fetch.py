@@ -337,7 +337,9 @@ def main():
     args = parser.parse_args()
     
     data = fetch_all_chart_data(args.weeks, target_week=args.week)
-    Path(args.out).write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    out_path = Path(args.out)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"\nSaved: {args.out}")
 
 

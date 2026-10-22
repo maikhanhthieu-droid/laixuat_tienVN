@@ -163,9 +163,10 @@ def generate_lnh_prose(sbv_data_4w: list[dict], vbma_data: object, target_week: 
 
 def generate_lstp_prose(vbma_4w: list, vnba: dict, target_week: str = '2026-W26') -> dict:
     """Generate prose cho section LSTP — yield curve + auction + secondary."""
-    from datetime import date as _date
+    from datetime import date as _date, timedelta as _timedelta
     _y, _w = int(target_week.split("-")[0]), int(target_week.split("-W")[1])
-    weeks = [f"W{w:02d}" for w in range(max(1,_w-3), _w+1)]
+    _cutoff = _date.fromisocalendar(_y, _w, 5)
+    weeks = [f"W{(_cutoff - _timedelta(weeks=offset)).isocalendar().week:02d}" for offset in range(3, -1, -1)]
     y10_values = [v.yields.get("10N") for v in vbma_4w]
     y5_values = [v.yields.get("5N") for v in vbma_4w]
     y2_values = [v.yields.get("2N") for v in vbma_4w]
@@ -254,9 +255,10 @@ def generate_lstp_prose(vbma_4w: list, vnba: dict, target_week: str = '2026-W26'
 
 def generate_fx_prose(sbv_4w: list, vbma_w26, vnba_w26, target_week: str = '2026-W26') -> dict:
     """Generate prose cho section Ngoại hối."""
-    from datetime import date as _date
+    from datetime import date as _date, timedelta as _timedelta
     _y, _w = int(target_week.split("-")[0]), int(target_week.split("-W")[1])
-    weeks = [f"W{w:02d}" for w in range(max(1,_w-3), _w+1)]
+    _cutoff = _date.fromisocalendar(_y, _w, 5)
+    weeks = [f"W{(_cutoff - _timedelta(weeks=offset)).isocalendar().week:02d}" for offset in range(3, -1, -1)]
     fx_values = []
     for d in sbv_4w:
         if d.get("fx_tm_low") and d.get("fx_tm_high"):

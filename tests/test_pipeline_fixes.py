@@ -225,3 +225,34 @@ def test_missing_fx_is_not_reported_as_stable():
     section = generate_fx_prose(sbv, None, None, "2026-W28")
     assert "Chưa đủ hai kỳ USD/VND" in section["overview"]
     assert "ổn định" not in section["overview"]
+
+
+def test_verify_data_parses_narrative_and_hyphen_sbv():
+    from verify_data import parse_sbv_lnh, parse_sbv_fx
+    narrative_text = (
+        "Thị trường liên ngân hàng:\n"
+        "Overnight 1.20%\n"
+        "1 tuần 1.45%\n"
+        "1 tháng 1.85%\n"
+        "Tỷ giá thương mại: 25.300 - 25.450\n"
+    )
+    lnh = parse_sbv_lnh(narrative_text)
+    assert lnh["overnight"] == 1.20
+    assert lnh["one_week"] == 1.45
+    assert lnh["one_month"] == 1.85
+
+    fx = parse_sbv_fx(narrative_text)
+    assert fx["tm_low"] == 25300.0
+    assert fx["tm_high"] == 25450.0
+    assert fx["tm_mid"] == 25375.0
+
+
+def test_cross_month_weekrange_slug():
+    week = WeekRange("2026-W36", date(2026, 8, 31), date(2026, 9, 4))
+    assert week.sbv_slug == "31.8-04.9.2026"
+
+
+def test_check_deps_allows_skip_fetch_without_pdftotext():
+    from run_pipeline import check_deps
+    # With skip_fetch=True and publish_telegram=False, missing pdftotext or node should not fail
+    assert check_deps(publish_telegram=False, skip_fetch=True) is True

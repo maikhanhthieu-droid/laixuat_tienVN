@@ -34,15 +34,34 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 USER_AGENT = (
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
 )
 PDF_MAGIC = b"%PDF-"
 SBV_HEADERS = {
     "User-Agent": USER_AGENT,
-    "Accept-Language": "vi,en;q=0.9",
-    "Referer": "https://www.sbv.gov.vn/vi/web/sbv_portal/thong-tin-ve-hoat-dong-ngan-hang-trong-tuan",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7",
+    "Referer": "https://sbv.gov.vn/vi/th%C3%B4ng-tin-v%E1%BB%81-ho%E1%BA%A1t-%C4%91%E1%BB%99ng-ng%C3%A2n-h%C3%A0ng-trong-tu%E1%BA%A7n",
 }
+
+_session_opener = None
+
+
+def get_session_opener() -> urllib.request.OpenerDirector:
+    global _session_opener
+    if _session_opener is None:
+        import http.cookiejar
+        import ssl
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        cj = http.cookiejar.CookieJar()
+        _session_opener = urllib.request.build_opener(
+            urllib.request.HTTPSHandler(context=ctx),
+            urllib.request.HTTPCookieProcessor(cj),
+        )
+    return _session_opener
 
 
 @dataclass
@@ -54,11 +73,13 @@ class WeekRange:
 
     @property
     def sbv_slug(self) -> str:
-        """SBV article URL slug: '01-05.6.2026' (zero-padded day, dot-separated, unpadded month).
-
-        SBV requires zero-padded day-of-month ('01-05' OK, '1-5' → 404).
-        Month is NOT padded ('6' not '06'). Year full.
+        """SBV article URL slug: '01-05.6.2026' or '31.8-04.9.2026'.
+        
+        Zero-padded day-of-month, unpadded month, full year.
+        If week crosses month boundaries, includes both months.
         """
+        if (self.monday.year, self.monday.month) != (self.friday.year, self.friday.month):
+            return f"{self.monday.day:02d}.{self.monday.month}-{self.friday.day:02d}.{self.friday.month}.{self.friday.year}"
         return f"{self.monday.day:02d}-{self.friday.day:02d}.{self.monday.month}.{self.monday.year}"
 
     @property
@@ -93,12 +114,17 @@ def enumerate_4_weeks(target_iso_week: str) -> list[WeekRange]:
 
 
 def curl(url: str, headers: Optional[dict] = None, sleep_s: float = 0.0) -> bytes:
-    """HTTP GET returning bytes, with optional sleep (SBV WAF avoidance)."""
-    hdrs = {"User-Agent": USER_AGENT}
+    """HTTP GET returning bytes, with session cookies and optional sleep."""
+    hdrs = {
+        "User-Agent": USER_AGENT,
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7",
+    }
     if headers:
         hdrs.update(headers)
     req = urllib.request.Request(url, headers=hdrs)
-    with urllib.request.urlopen(req, timeout=30) as resp:
+    opener = get_session_opener()
+    with opener.open(req, timeout=30) as resp:
         data = resp.read()
     if sleep_s:
         time.sleep(sleep_s)
@@ -151,7 +177,29 @@ def sbv_pdf_filename_candidates(week: WeekRange) -> list[str]:
                 f"{week.friday.day:02d}.{week.friday.month}.{week.friday.year}"
             ),
         )
+        labels.append(
+            f"{week.monday.day:02d}-{week.friday.day:02d}.{week.friday.month}.{week.friday.year}"
+        )
     return list(dict.fromkeys(f"{label}.pdf" for label in labels))
+
+
+def sbv_article_slug_candidates(week: WeekRange) -> list[str]:
+    """Return all date slug variations SBV might use for the weekly article."""
+    base_prefix = "diễn-biến-thị-trường-ngoại-tệ-và-thị-trường-liên-ngân-hàng-tuần-từ-"
+    date_patterns = [week.sbv_slug]
+    if (week.monday.year, week.monday.month) != (week.friday.year, week.friday.month):
+        date_patterns.extend([
+            f"{week.monday.day:02d}.{week.monday.month}-{week.friday.day:02d}.{week.friday.month}.{week.friday.year}",
+            f"{week.monday.day:02d}.{week.monday.month:02d}-{week.friday.day:02d}.{week.friday.month:02d}.{week.friday.year}",
+            f"{week.monday.day:02d}-{week.friday.day:02d}.{week.friday.month}.{week.friday.year}",
+            f"{week.monday.day:02d}-{week.friday.day:02d}.{week.monday.month}.{week.monday.year}",
+        ])
+    else:
+        date_patterns.extend([
+            f"{week.monday.day}-{week.friday.day}.{week.monday.month}.{week.monday.year}",
+            f"{week.monday.day:02d}-{week.friday.day:02d}.{week.monday.month:02d}.{week.monday.year}",
+        ])
+    return [f"{base_prefix}{p}" for p in dict.fromkeys(date_patterns)]
 
 
 def fetch_sbv_week(week: WeekRange, out_dir: Path) -> Optional[Path]:
@@ -159,47 +207,69 @@ def fetch_sbv_week(week: WeekRange, out_dir: Path) -> Optional[Path]:
 
     The article slug is 'diễn-biến-...-tuần-từ-{D1}-{D2}.{M}.{Y}' (Vietnamese
     with diacritics). We URL-encode the full slug. SBV accepts both /vi/w/ and
-    /vi/web/sbv_portal/w/ forms — we use the latter (canonical).
+    /vi/web/sbv_portal/w/ forms.
     """
-    slug_vi = f"diễn-biến-thị-trường-ngoại-tệ-và-thị-trường-liên-ngân-hàng-tuần-từ-{week.sbv_slug}"
-    article_urls = [
-        "https://www.sbv.gov.vn/vi/web/sbv_portal/w/" + quote(slug_vi),
-        "https://www.sbv.gov.vn/vi/w/" + quote(slug_vi),
-    ]
     pdf_path = out_dir / f"sbv_{week.iso_week}.pdf"
     txt_path = out_dir / f"sbv_{week.iso_week}.txt"
     pdf_headers = {
         **SBV_HEADERS,
         "Accept": "application/pdf,*/*",
-        "Referer": article_urls[0],
     }
 
-    # Liferay serves documents without the UUID suffix. Prefer that stable URL:
-    # it halves SBV requests and avoids the article-page WAF seen on CI runners.
+    # 1. Try stable direct URL without UUID (single attempt, no long retry loop if 404/WAF)
     pdf_data = None
     direct_errors = []
     for filename in sbv_pdf_filename_candidates(week):
-        direct_url = "https://www.sbv.gov.vn/documents/20117/0/" + quote(filename)
-        try:
-            pdf_data = download_pdf(
-                direct_url,
-                headers=pdf_headers,
-                retries=4,
-                retry_delay_s=10,
-            )
+        for domain in ["https://www.sbv.gov.vn", "https://sbv.gov.vn"]:
+            direct_url = f"{domain}/documents/20117/0/" + quote(filename)
+            try:
+                pdf_data = download_pdf(
+                    direct_url,
+                    headers={**pdf_headers, "Referer": f"{domain}/vi/trang-chu"},
+                    retries=1,
+                    retry_delay_s=0.5,
+                )
+                break
+            except Exception as exc:
+                direct_errors.append(f"{filename}: {exc}")
+        if pdf_data is not None:
             break
-        except RuntimeError as exc:
-            direct_errors.append(f"{filename}: {exc}")
 
-    # Fallback for any document whose library filename differs from the usual
-    # date convention. A 200 page with no PDF is treated as an error, not a
-    # holiday, because SBV's WAF also returns small rejection pages with 200.
+    # 2. If direct URL didn't return a PDF, discover the article and its PDF with UUID
     article_errors = []
     article_found = False
     if pdf_data is None:
+        article_urls = []
+
+        # 2a. Try listing page discovery
+        for list_url in [
+            "https://sbv.gov.vn/vi/th%C3%B4ng-tin-v%E1%BB%81-ho%E1%BA%A1t-%C4%91%E1%BB%99ng-ng%C3%A2n-h%C3%A0ng-trong-tu%E1%BA%A7n",
+            "https://www.sbv.gov.vn/vi/th%C3%B4ng-tin-v%E1%BB%81-ho%E1%BA%A1t-%C4%91%E1%BB%99ng-ng%C3%A2n-h%C3%A0ng-trong-tu%E1%BA%A7n",
+        ]:
+            try:
+                list_html = curl(list_url, headers=SBV_HEADERS, sleep_s=0.5).decode("utf-8", errors="ignore")
+                for m in re.finditer(r'href="([^"]*(?:di%E1%BB%85n-bi%E1%BA%BFn|diễn-biến)[^"]*)"', list_html, re.I):
+                    href = m.group(1)
+                    if not href.startswith("http"):
+                        href = "https://sbv.gov.vn" + href
+                    if href not in article_urls:
+                        article_urls.append(href)
+            except Exception as exc:
+                article_errors.append(f"listing: {exc}")
+
+        # 2b. Add candidate slugs across known domains
+        for slug in sbv_article_slug_candidates(week):
+            for domain in ["https://sbv.gov.vn", "https://www.sbv.gov.vn"]:
+                u1 = f"{domain}/vi/w/" + quote(slug)
+                u2 = f"{domain}/vi/web/sbv_portal/w/" + quote(slug)
+                if u1 not in article_urls:
+                    article_urls.append(u1)
+                if u2 not in article_urls:
+                    article_urls.append(u2)
+
         for article_url in article_urls:
             try:
-                html = curl(article_url, headers=SBV_HEADERS, sleep_s=10).decode(
+                html = curl(article_url, headers=SBV_HEADERS, sleep_s=1.0).decode(
                     "utf-8", errors="ignore"
                 )
             except urllib.error.HTTPError as exc:
@@ -223,16 +293,17 @@ def fetch_sbv_week(week: WeekRange, out_dir: Path) -> Optional[Path]:
                 )
                 continue
 
-            pdf_url = "https://www.sbv.gov.vn" + pdf_match.group(1)
+            base_dom = "https://sbv.gov.vn" if "sbv.gov.vn" in article_url else "https://www.sbv.gov.vn"
+            pdf_url = base_dom + pdf_match.group(1)
             try:
                 pdf_data = download_pdf(
                     pdf_url,
                     headers={**pdf_headers, "Referer": article_url},
-                    retries=4,
-                    retry_delay_s=10,
+                    retries=3,
+                    retry_delay_s=2.0,
                 )
                 break
-            except RuntimeError as exc:
+            except Exception as exc:
                 article_errors.append(f"{pdf_url}: {exc}")
 
     if pdf_data is None:
@@ -373,13 +444,24 @@ def fetch_vnba_by_weeks(out_dir: Path, target_weeks: list) -> dict:
 
     # Find starting point — hashtag or known article
     start_url = None
-    for week_n in [4, 3, 5]:
-        html = fetch_url(f"https://vnba.org.vn/vi/hashtag/kinh-te-tai-chinh-tien-te-tuan-{week_n}")
+    for tag_url in [
+        "https://vnba.org.vn/vi/hashtag/ban-tin-tuan-vnba-24399",
+        "https://vnba.org.vn/vi/tin-tuc/thong-tin-hoat-dong-ngan-hang",
+    ]:
+        html = fetch_url(tag_url)
         if html:
-            articles = re.findall(r'/vi/ban-tin-kinh-te-tai-chinh-tien-te-tuan-\d+-thang-\d+-\d+-\d+\.htm', html)
+            articles = re.findall(r'/vi/[^"]*ban-tin-kinh-te-tai-chinh-tien-te-tuan-[^"]+\.htm', html)
             if articles:
                 start_url = "https://vnba.org.vn" + sorted(set(articles))[-1]
                 break
+    if not start_url:
+        for week_n in [4, 3, 5]:
+            html = fetch_url(f"https://vnba.org.vn/vi/hashtag/kinh-te-tai-chinh-tien-te-tuan-{week_n}")
+            if html:
+                articles = re.findall(r'/vi/ban-tin-kinh-te-tai-chinh-tien-te-tuan-\d+-thang-\d+-\d+-\d+\.htm', html)
+                if articles:
+                    start_url = "https://vnba.org.vn" + sorted(set(articles))[-1]
+                    break
     if not start_url:
         start_url = "https://vnba.org.vn/vi/ban-tin-kinh-te-tai-chinh-tien-te-tuan-4-thang-6-2026-22424.htm"
 

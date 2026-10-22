@@ -79,19 +79,26 @@ def run(cmd: list[str], desc: str) -> bool:
     return True
 
 
-def check_deps(publish_telegram: bool = False) -> bool:
+def check_deps(publish_telegram: bool = False, skip_fetch: bool = False) -> bool:
     """Bước 0: Check dependencies."""
     step("BƯỚC 0: Check dependencies")
-    deps = {"pdftotext": shutil.which("pdftotext"), "node": shutil.which("node")}
+    pdftotext_path = shutil.which("pdftotext")
+    node_path = shutil.which("node")
     fred_key = os.environ.get("FRED_API_KEY")
 
     all_ok = True
-    for name, path in deps.items():
-        if path:
-            print(f"  ✅ {name}: {path}")
-        else:
-            print(f"  ❌ {name}: NOT FOUND")
-            all_ok = False
+    if pdftotext_path:
+        print(f"  ✅ pdftotext: {pdftotext_path}")
+    elif skip_fetch:
+        print("  ⚠️ pdftotext: NOT FOUND (skipped because --skip-fetch is enabled)")
+    else:
+        print("  ❌ pdftotext: NOT FOUND (required to convert fetched PDFs to text)")
+        all_ok = False
+
+    if node_path:
+        print(f"  ✅ node: {node_path}")
+    else:
+        print("  ⚠️ node: NOT FOUND (JS syntax gate in audit will be skipped)")
 
     if fred_key:
         print(f"  ✅ FRED_API_KEY: set")
@@ -163,6 +170,14 @@ def fetch_pdfs(week: str, cache_dir: Path) -> bool:
     year, week_num = int(year_str), int(week_str)
 
     target_weeks = rolling_weeks(week)
+
+    # Pre-populate cache from repo data/sources_cache if available
+    repo_cache_dir = SKILL_DIR / "data" / "sources_cache"
+    if repo_cache_dir.exists():
+        for txt_file in repo_cache_dir.glob("*.txt"):
+            dest_file = cache_dir / txt_file.name
+            if not dest_file.exists():
+                shutil.copy2(txt_file, dest_file)
 
     # Check cache — which weeks already have all 3 sources?
     existing = []
@@ -401,8 +416,8 @@ def main():
     print(f"   Output: {out_dir.absolute()}")
 
     # Bước 0: Check deps
-    if not check_deps(publish_telegram=args.publish_telegram):
-        print("\n❌ Dependencies missing. Install pdftotext (poppler) + node first.")
+    if not check_deps(publish_telegram=args.publish_telegram, skip_fetch=args.skip_fetch):
+        print("\n❌ Dependencies missing.")
         sys.exit(1)
 
     # Bước 1: Pre-flight

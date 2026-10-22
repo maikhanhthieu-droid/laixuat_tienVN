@@ -52,6 +52,14 @@ jobs:
             weekly-state-${{ github.ref_name }}-
           save-always: true
 
+      - name: Pre-seed source cache from repository
+        shell: bash
+        run: |
+          mkdir -p output/sources_cache
+          if [ -d "data/sources_cache" ]; then
+            cp data/sources_cache/*.txt output/sources_cache/ 2>/dev/null || true
+          fi
+
       - name: Run, audit and publish
         run: |
           python scripts/run_pipeline.py \
@@ -60,14 +68,15 @@ jobs:
             --publish-telegram \
             --telegram-no-document
 
-      - name: Publish verified facts feed
+      - name: Publish verified facts feed and cache
         shell: bash
         run: |
-          mkdir -p data
-          cp output/rates_feed_latest.json data/rates_feed_latest.json
+          mkdir -p data/sources_cache
+          cp output/rates_feed_latest.json data/rates_feed_latest.json 2>/dev/null || true
+          cp output/sources_cache/*.txt data/sources_cache/ 2>/dev/null || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/rates_feed_latest.json
+          git add data/rates_feed_latest.json data/sources_cache
           git diff --cached --quiet && exit 0
-          git commit -m "data: update verified VN rates feed"
+          git commit -m "data: update verified VN rates feed and cache"
           git push

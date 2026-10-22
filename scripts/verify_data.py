@@ -59,6 +59,7 @@ def parse_sbv_lnh(text: str) -> dict:
 
     Table header: 'Qua đêm 1 tuần 2 tuần 1 tháng 3 tháng 6 tháng 9 tháng'
     Row: 'VND  6,81  6,59  6,73  7,01  7,61  8,13  6,65'
+    Also supports narrative format ('Overnight 1.20', '1 tuần 1.45', '1 tháng 1.85').
     """
     result = {}
     header_re = re.compile(
@@ -66,23 +67,36 @@ def parse_sbv_lnh(text: str) -> dict:
         re.IGNORECASE,
     )
     m = header_re.search(text)
-    if not m:
-        return result
-    after = text[m.end():m.end() + 500]
-    vnd_match = re.search(r"VND\s+([\d,]+)\s+([\d,]+)\s+([\d,]+)\s+([\d,]+)", after)
-    if vnd_match:
-        result["overnight"] = float(vnd_match.group(1).replace(",", "."))
-        result["one_week"] = float(vnd_match.group(2).replace(",", "."))
-        result["one_month"] = float(vnd_match.group(4).replace(",", "."))
+    if m:
+        after = text[m.end():m.end() + 500]
+        vnd_match = re.search(r"VND\s+([\d,]+)\s+([\d,]+)\s+([\d,]+)\s+([\d,]+)", after)
+        if vnd_match:
+            result["overnight"] = float(vnd_match.group(1).replace(",", "."))
+            result["one_week"] = float(vnd_match.group(2).replace(",", "."))
+            result["one_month"] = float(vnd_match.group(4).replace(",", "."))
+            return result
+
+    # Narrative fallback:
+    m = re.search(r"(?:overnight|qua đêm)\s+(\d{1,2}[.,]\d{1,4})", text, re.I)
+    if m:
+        result["overnight"] = float(m.group(1).replace(",", "."))
+    m = re.search(r"1\s*tuần\s+(\d{1,2}[.,]\d{1,4})", text, re.I)
+    if m:
+        result["one_week"] = float(m.group(1).replace(",", "."))
+    m = re.search(r"1\s*tháng\s+(\d{1,2}[.,]\d{1,4})", text, re.I)
+    if m:
+        result["one_month"] = float(m.group(1).replace(",", "."))
     return result
 
 
 def parse_sbv_fx(text: str) -> dict:
     """Re-parse SBV FX — cặp tỷ giá cuối file (ngày cuối tuần).
 
-    Pattern: '26.114/26.454' — lấy cặp cuối cùng.
+    Supports slash format: '26.114/26.454' or hyphen format: '25.300 - 25.450'.
     """
     matches = re.findall(r"(\d{2}\.\d{3})/(\d{2}\.\d{3})", text)
+    if not matches:
+        matches = re.findall(r"(\d{2}\.\d{3})\s*[-–—]\s*(\d{2}\.\d{3})", text)
     if not matches:
         return {}
     last_low, last_high = matches[-1]
@@ -170,7 +184,7 @@ def verify_report(report_path: Path, cache_dir: Path, strict: bool = False) -> l
             continue
         text = sbv_file.read_text(encoding="utf-8", errors="ignore")
         truth_lnh = parse_sbv_lnh(text)
-        excerpt = excerpt_around(text, r"Qua đêm.*?9 tháng", 100)
+        excerpt = excerpt_around(text, r"(?:Qua đêm.*?9 tháng|Overnight|Qua đêm)", 100)
         for key, truth_key in [("interbank_on", "overnight"),
                                 ("interbank_1w", "one_week"),
                                 ("interbank_1m", "one_month")]:
@@ -214,7 +228,7 @@ def verify_report(report_path: Path, cache_dir: Path, strict: bool = False) -> l
             continue
         text = sbv_file.read_text(encoding="utf-8", errors="ignore")
         truth_fx = parse_sbv_fx(text)
-        excerpt = excerpt_around(text, r"\d{2}\.\d{3}/\d{2}\.\d{3}", 60)
+        excerpt = excerpt_around(text, r"(?:\d{2}\.\d{3}/\d{2}\.\d{3}|\d{2}\.\d{3}\s*[-–—]\s*\d{2}\.\d{3})", 60)
         card = report["group3_fx_global"].get("fx_tm_mid")
         if not card:
             continue
@@ -314,7 +328,7 @@ def verify_report_v2(report_path: Path, cache_dir: Path, strict: bool = False) -
             continue
         text = sbv_file.read_text(encoding="utf-8", errors="ignore")
         truth_lnh = parse_sbv_lnh(text)
-        excerpt = excerpt_around(text, r"Qua đêm.*?9 tháng", 100)
+        excerpt = excerpt_around(text, r"(?:Qua đêm.*?9 tháng|Overnight|Qua đêm)", 100)
         on_avg_4w = report.get("sections", {}).get("lnh", {}).get("data_summary", {}).get("on_avg_4w", [])
         w1_4w = report.get("sections", {}).get("lnh", {}).get("data_summary", {}).get("w1_4w", [])
         m1_4w = report.get("sections", {}).get("lnh", {}).get("data_summary", {}).get("m1_4w", [])
@@ -396,7 +410,7 @@ def verify_report_v2(report_path: Path, cache_dir: Path, strict: bool = False) -
             continue
         text = sbv_file.read_text(encoding="utf-8", errors="ignore")
         truth_fx = parse_sbv_fx(text)
-        excerpt = excerpt_around(text, r"\d{2}\.\d{3}/\d{2}\.\d{3}", 60)
+        excerpt = excerpt_around(text, r"(?:\d{2}\.\d{3}/\d{2}\.\d{3}|\d{2}\.\d{3}\s*[-–—]\s*\d{2}\.\d{3})", 60)
         fx_4w = report.get("sections", {}).get("fx", {}).get("data_summary", {}).get("fx_mid_4w", [])
         reported = next((v["value"] for v in fx_4w if v["week"] in (week, week_short) or v["week"].endswith(week_short)), None)
         truth = truth_fx.get("tm_mid")
