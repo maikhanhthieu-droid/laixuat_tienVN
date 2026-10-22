@@ -1,0 +1,646 @@
+n
+THỊ TRƯỜNG TRÁI PHIẾU CHÍNH PHỦ THỨ CẤP
+THỊ TRƯỜNG TRÁI PHIẾU DOANH NGHIỆP
+1 2 3 4 5 6
+Theo dữ liệu VBMA tổng hợp từ HNX và SSC, tính đến ngày công bố thông tin
+31/07/2026, có 20 đợt phát hành TPDN được ghi nhận trong tháng 7 năm 2026.
+Trong kỳ báo cáo, giá trị giao dịch TPDN riêng lẻ trung bình ngày đạt 6,894 tỷ
+đồng, giảm 7.52% so với tuần trước
+Ngày 29/07/2026, KBNN đã gọi thầu tổng cộng 13,000 tỷ đồng TPCP ở 5 kỳ hạn
+(3, 5, 10, 15 và 30 năm). Tỷ lệ trúng thầu của trái phiếu kỳ hạn 5 năm và 10 năm
+lần lượt là 89% và 44%. Lãi suất trúng thầu kỳ hạn 5 năm và 10 năm tăng lần
+lượt 2 đcb và 1 đcb so với phiên trước đó. Từ đầu năm 2026 đến ngày 29/7, Kho
+bạc Nhà nước đã huy động gần 201,165 tỷ đồng trái phiếu Chính phủ các kỳ hạn
+từ 5 năm đến 30 năm, đạt khoảng 40.2% kế hoạch phát hành 500,000 tỷ đồng
+trong năm 2026. Trong tuần tới, KBNN sẽ gọi thầu 13,000 tỷ đồng ở 5 kỳ hạn (3,
+5, 10, 15 và 30 năm).
+Giá trị giao dịch (GTGD) đạt 74,893 tỷ đồng, trong đó GTGD thông thường
+(outright) trung bình ngày giảm 5.% so với kỳ trước, GTGD mua bán lại (repo)
+trung bình ngày giảm 20% so với kỳ trước. Khối ngoại bán ròng khoảng 99 tỷ
+đồng trong kỳ báo cáo. Lợi suất giao dịch trung bình TPCP tại VBMA tăng nhẹ ở
+các kỳ hạn 1-3 năm, trong khi các kỳ hạn còn lại hầu hết đi ngang so với tuần
+trước.
+Kết tuần, trong khi lãi suất qua đêm ON tăng 329 đcb lên mức 5.72%, lãi suất kỳ
+hạn 1W giảm 132 đcb xuống mức 4.83%. Ngoài ra, lãi suất kỳ hạn 6 tháng tăng
+46 đcb lên mức 7.47% và lãi suất kỳ hạn 9 tháng giữ nguyên ở mức 9.26%.
+Chênh lệch lãi suất USD và VND kỳ hạn qua đêm và 1W trung bình thu hẹp
+khoảng 23 đcb. Tổng giá trị giao dịch trên thị trường liên ngân hàng trong kỳ báo
+cáo tăng 3.8% so với kỳ trước, lên mức 4.67 triệu tỷ đồng, trong đó 2 kỳ hạn ON
+và 1W chiếm 98.6%.
+Hiệp hội Thị trường Trái phiếu Việt Nam
+THỊ TRƯỜNG TIỀN TỆ
+Báo cáo tuần
+   27/7 - 31/7/2026  
+THỊ TRƯỜNG TRÁI PHIẾU CHÍNH PHỦ SƠ CẤP
+THỊ TRƯỜNG NGOẠI HỐI
+Kết tuần, tỷ giá trung tâm tăng 55 VND/USD so với tuần trước, lên mức 25,338
+VND/USD. Ngoài ra, tỷ giá niêm yết tại Vietcombank giảm 20 VND/USD so với
+tuần trước ở cả chiều mua và bán, tương đương với 26,110 VND/USD (chiều
+mua) và 26,490 VND/USD (chiều bán). 
+23,00023,60024,20024,80025,40026,00026,60027,2007/20249/202411/20241/20253/20255/20257/20259/202511/20251/20263/20265/20267/2026TỶ GIÁ USD/VNDTỷ giá trung tâmTỷ giá mua của NHTMTỷ giá bán của NHTM02,0004,0006,0008,00010,00012,00014,00016,00018,0002/1/2616/1/2630/1/2613/2/2627/2/2613/3/2627/3/2610/4/2624/4/268/5/2622/5/265/6/2619/6/263/7/2617/7/2631/7/26GTGT TRUNG BÌNH PHIÊN OUTRIGHT VÀ REPOGTGD Outright TBNGTGD Repo TBNĐơn vị: Tỷ VND 0%1%2%3%4%5%6%7/20238/20239/202310/202311/202312/20231/20242/20243/20244/20245/20246/20247/20248/20249/202410/202411/202412/20241/20252/20253/20254/20255/20256/20257/20258/20259/202510/202511/202512/20251/20262/20263/20264/20265/20266/20267/2026DIỄN BIẾN LỢI SUẤT TPCP - VBMA 5N10N15N
+1
+
+LÃI SUẤT LIÊN NGÂN HÀNG
+Nguồn: NHNN
+Đơn vị: Nghìn tỷ đồng
+Nguồn: NHNN
+ON 2.47 5.72 2.43 329
+Đvị : % TB 5 ngày 31/7/2026 24/7/2026 +/- so tuần trước (đcb)
+2W 5.65 5.99 5.47 52
+1W 4.58 4.83 3.51 132
+3M 7.47 7.31 7.71 -40
+1M 6.77 6.93 7.24 -31
+6M
+9M
+7.51 7.56 7.10
+Báo cáo tuần
+Thị trường tiền tệ
+-106
+9.26 9.26 9.26 0 0
+46
+-45
+-64
+-121
+-156
+-23
++/- so tháng trước (đcb)
+Nghiệp vụ thị trường mở: Trong kỳ báo cáo, NHNN đã bơm ra thị trường 48,373 tỷ đồng thông qua nghiệp vụ thị trường mở (OMO) ởkỳ hạn 7 ngày, 42 ngày, 63 ngày và 91 ngày vớimức lãi suất 4.5%/năm.Kết tuần, hơn 36 nghìn tỷ đồng trên kênh mua kỳ hạn đã đáo hạn và được rút khỏi hệ thống. Qua đó, NHNN bơm ròng hơn 12.3 nghìn tỷ,lượng OMO lưu hành đạt hơn 172 nghìn tỷ.Lãi suất liên ngân hàng:Kết tuần, trong khi lãi suất qua đêm ON tăng 329 đcb lên mức 5.72%, lãi suất kỳ hạn 1W tăng 132 đcb xuốngmức 4.83%. Ngoài ra, lãi suất kỳ hạn 6 tháng tăng 46 đcb lên mức 7.47% và lãi suất kỳ hạn 9 tháng giữ nguyên ở mức 9.26%. Chênhlệch lãi suất USD và VND kỳ hạn qua đêm và 1W trung bình thu hẹp khoảng 23 đcb.Khối lượng giao dịch:Tổng giá trị giao dịch trên thị trường liên ngân hàng trong kỳ báo cáo tăng 3.8% so với kỳ trước, lên mức 4.67triệu tỷ đồng. Trong đó, kỳ hạn qua đêm (ON) và 1 tuần (1W) có khối lượng giao dịch lớn nhất, lần lượt đạt khoảng 4.39 triệu tỷ đồng và213 nghìn tỷ đồng. Hai kỳ hạn trên chiếm 98.6% tổng khối lượng giao dịch của cả tuần. - 2 4 6 8 10 1220/12/243/1/2517/1/2531/1/2514/2/2528/2/2514/3/2528/3/2511/4/2525/4/259/5/2523/5/256/6/2520/6/254/7/2518/7/251/8/2515/8/2529/8/2512/9/2526/9/2510/10/2524/10/257/11/2521/11/255/12/2519/12/252/1/2616/1/2630/1/2613/2/2627/2/2613/3/2627/3/2610/4/2624/4/268/5/2622/5/265/6/2619/6/263/7/2617/7/2631/7/26BÌNH QUÂN LÃI SUẤT LIÊN NGÂN HÀNGON 1W 2W 3M
+-100-5005010015020025016/1/2630/1/2613/2/2627/2/2613/3/2627/3/2610/4/2624/4/268/5/2622/5/265/6/2619/6/263/7/2617/7/2631/7/26ThousandsĐẤU THẦU TÍN PHIẾU NHNN VÀ OMOPhát hành SBV-billsPhát hành OMO0100200300400500GIÁ TRỊ LƯU HÀNH CỦA TÍN PHIẾU NHNN VÀ OMO Tín phiếu NHNNOMO
+2
+
+Thị trường ngoại hối
+TỶ GIÁ TRUNG TÂM
+Nguồn: NHNN
+TỶ GIÁ CÁC ĐỒNG TIỀN CHÍNH
+Nguồn: investing.com
+26,327 -0.10% 8.12%
+163.850
+5.31%
+-5.48%
+1.41%
+-0.31%
+-3.83% 10.99%
+1.137
+6.772
+GBP/USD
+-2.24%101.470 -1.54%
+1.332
+USD index
+1.348
+99.910
+1.19% 6.88%
+1.153
+6.751
+157.580
+USD/VND
+EUR/USD
+USD/CNY 
+USD/JPY
+26,301
+28/7/2026
+0.040%
+0.051%
+25,320                
+25,338                
+0.055%
+0.071%
+30/7/2026
+31/7/2026
+Báo cáo tuần
+24/7/202631/7/2026
+25,252                
+25,283                
+27/7/2026
+29/7/2026
+25,306                
+% Tđổi tuần trước % Tđổi đầu năm
+% Thay đổiTỷ giá
+20/7/2026
+22/7/2026
+23/7/2026
+25,260                0.000%
+25,260                21/7/2026
+25,272                0.048%
+0.032%
+Ngày
+24/7/2026
+25,293                
+25,306                0.000%
+0.044%
+Tỷ giá USD/VND:Kết tuần, tỷ giá trung tâm tăng 55 VND/USD so với tuần trước, lên mức 25,338 VND/USD. Ngoài ra, tỷ giá niêm yết tạiVietcombank giảm 20 VND/USD so với tuần trước ở cả chiều mua và bán, tương đương với 26,110 VND/USD (chiều mua) và 26,490VND/USD (chiều bán).Thị trường ngoại tệ: Tuần 27/7–31/7, số liệu vĩ mô Mỹ trái chiều quanh cuộc họp FOMC: đơn xin trợ cấp thất nghiệp lần đầu tăng 9,000lên 197,000 (tuần đến 25/7), vẫn thấp hơn dự báo 201,000; GDP Quý 2/2026 (sơ bộ) chỉ tăng 1.5%, thấp hơn dự báo 2.1% và mức 2.1%của Quý 1; PCE tháng 6 ở 3.7% YoY (core 3.3%) do áp lực giá năng lượng. Fed giữ nguyên lãi suất 3.50-3.75% (28-29/7, biểu quyết 9-3,3 thành viên muốn tăng), viện dẫn bất định từ xung đột Trung Đông. Xác suất tăng lãi suất tại cuộc họp 16/9 hạ về ~63% (từ đỉnh gần82% tuần trước), xác suất tăng 50 điểm cơ bản về 0%.Về dầu thô, lệnh ngừng bắn Mỹ-Iran sụp đổ ngày 28/7 sau vụ Iran tấn công căn cứ Mỹ tại Jordan; Houthi, Saudi tiếp tục leo thang, Irancòn tuyên bố tấn công tàu chở dầu qua Hormuz. Brent giảm còn 88.36 USD/thùng (27/7) khi ngừng bắn còn hiệu lực, bật tăng 7.9% lên90.74 USD/thùng (28/7) sau vụ Jordan, đóng cửa tuần quanh 88 USD/thùng - giảm ~10% so với ~98 USD/thùng tuần trước, dù vẫn tănggần 24% MoM trong tháng 7.Chỉ số đô la Mỹ (DXY) đã giảm 1.54% so với tuần trước xuống 99.91 điểm. Đồng GBP và đồng EUR lần lượt tăng 1.19% và 1.41% so vớiđồng USD. Đồng JPY giảm với tỷ giá USD/JPY lên mức 157.58.Tuần tới, một số dữ liệu kinh tế Mỹ sẽ được công bố, bao gồm Dự trữ dầu thô và Tỷ lệ thất nghiệp.22,20022,80023,40024,00024,60025,20025,80026,40027,000TỶ GIÁ USD/VNDTỷ giá trung tâmTỷ giá mua của NHTMTỷ giá bán của NHTM
+3
+
+3
+Kết quả đấu thầu TPCP (tuần 27/7 - 31/7/2026)
+STT Ngày Mã TP GTTT Thay đổi (đcb)
+1 29/7/2026 TD2629001 0 0
+2 29/7/2026 TD2631010 3,550 2
+3 29/7/2026 TD2636024 3,050 1
+4 29/7/2026 TD2641037 0 0
+5 29/7/2026 TD2656067 0 0
+Kế hoạch đấu thầu từ 3/8 - 7/8/2026
+STT Ngày
+1 5/8/2026
+2 5/8/2026
+3 5/8/2026
+4 5/8/2026
+5 5/8/2026
+4
+5
+6
+10
+Nguồn: HNX Nguồn: HNX
+* Chú thích: Dữ liệu VBMA tổng hợp tính đến ngày 31/7/2026
+1
+4,000
+7,000
+1,000
+KBNN TD2656067 Bổ sung 30 500
+Kì hạn (năm)
+3
+Giá trị (tỷ)
+500
+10
+15
+Mã TP
+TD2629001
+TD2631010
+TD2636024
+TD2641037
+Kiểu phát hành
+Bổ sung
+Bổ sung
+Bổ sung
+Bổ sung
+5
+Đơn vị: Tỷ đồng
+TCPH
+KBNN
+KBNN
+KBNN
+KBNN
+1,000 530
+KBNN 10
+KBNN 15
+7,000 7,500 4.36
+-
+KBNN 30 500 0 -
+Thị trường TPCP sơ cấp
+Báo cáo tuần
+TCPH Kì hạn (năm) GTGT
+6,850
+GTĐT LSTT (%)
+-
+KBNN 5 4,000
+500 500KBNN 3
+4.2
+Đơn vị: Tỷ đồng
+0%40%80%120%160%200%05,00010,00015,00020,00025,00010/12/2531/12/2521/1/2611/2/264/3/2625/3/2615/4/266/5/2627/5/2617/6/268/7/2629/7/26GIÁ TRỊ GỌI THẦU VÀ ĐẶT THẦU TPCPGTTTTỷ lệ đặt thầuTỷ lệ trúng thầu
+Trái phiếu Chính phủ:Vào ngày 29/07/2026, Kho bạc Nhà nước đã gọi thầu tổng cộng 13,000 tỷ đồng trái phiếu Chính phủ, ở các kỳ hạn3 năm (500 tỷ), 5 năm (4,000 tỷ), 10 năm (7,000 tỷ), 15 năm (1,000 tỷ) và 30 năm (500 tỷ).Tỷ lệ trúng thầu của trái phiếu kỳ hạn 5 năm và 10 năm lần lượt là 89% và 44%. Lãi suất trúng thầu kỳ hạn 5 năm và 10 năm tăng lần lượt 2đcb và 1 đcb so với phiên trước đó.Từ đầu năm 2026 đến ngày 29/7, Kho bạc Nhà nước đã huy động gần 201,165 tỷ đồng trái phiếu Chính phủ các kỳ hạn từ 5 năm đến 30 năm, đạt khoảng 40.2% kế hoạch phát hành 500,000 tỷ đồng trong năm 2026.Trái phiếu kỳ hạn 10 năm được phát hành nhiều nhất với 161,350 tỷ đồng, tiếp theo là kỳ hạn 5 năm với 35,805 tỷ đồng và 15 năm với 2,700 tỷ đồng. Ba kỳ hạn này chiếm khoảng 99.3% tổng giá trị kể từ đầu năm.Kế hoạch đấu thầu từ 3/8 - 7/8/2026:Trong tuần tới, Kho bạc Nhà nước sẽ gọi thầu 13,000 tỷ đồng trái phiếu Chính phủ, ở các kỳ hạn 3 năm (500 tỷ), 5 năm (4,000 tỷ), 10 năm (7,000 tỷ), 15 năm (1,000 tỷ), và 30 năm (500 tỷ). 
+0.55 35.81161.352.701.36%35.81%0.00%70.15%3.18%0.00%3.06%3N 5N 7N 10N 15N 20N 30NGTPH TPCP THEO KỲ HẠN (YTD)Phát hành (Nghìn tỷ VND)% thực hiện KH năm
+Tỷ đồng
+4
+
+ 
+BIẾN ĐỘNG LỢI SUẤT PHÒNG GIAO DỊCH VBMA
+* Chú thích: Dữ liệu VBMA tổng hợp tính đến ngày 31/7/2026
+Đvị: tỷ Nguồn: HNX Đvị: nghìn tỷ Nguồn: HNX
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20
+31/7/2025 2.33% 2.37% 2.45% 2.74% 3.07% 3.32% 3.43% 3.49%
+4.66%
+31/7/2026 3.47% 3.57% 3.64% 4.21% 4.27% 4.41% 4.57% 4.66%
+20N
+120.44 109.06 114.32 116.40
+Nguồn: VBMA
+YoY (đcb) 113.38 119.68 119.64 147.38
+7N 10N 15N
+1.42 1.92
+24/7/2026 3.45%
+1N 2N 3N 5N
+WoW (đcb)
+3.55% 3.61% 4.21% 4.27% 4.41% 4.58%
+30N
+4.72%
+4.72%
+3.57%
+0.00
+115.90
+Báo cáo tuần
+Thị trường TPCP thứ cấp
+3.28 0.32 0.08 0.32 -0.32 0.00
+Tình hình giao dịch: Trong kỳ báo cáo, giá trị giao dịch (GTGD) thị trường thứ cấp đạt  74,893 tỷ đồng; trong đó, GTGD outright chiếm khoảng 73% GTGD outright trung bình ngày là 10,980 tỷ đồng (giảm 5.0% so với kỳ trước) và GTGD repo trung bình ngày là 3,999 tỷ đồng (giảm 20.3% so với kỳ trước).   Nhà đầu tư nước ngoài: Khối ngoại bán ròng khoảng 99 tỷ đồng trong tuần qua. Lũy kế từ đầu năm đến nay, tổng giá trị bán ròng của nhà đầu tư nước ngoài đạt khoảng 6,189 tỷ đồng.    Lợi suất trái phiếu Chính phủ (theo VBMA):Lợi suất giao dịch trung bình TPCP tại VBMA đi ngang ở hầu hết các kì hạn so với tuần trước.1.0%1.5%2.0%2.5%3.0%3.5%4.0%4.5%5.0%1N 2N 3N 5N 7N 10N 15N 20N 30NDIỄN BIẾN LỢI SUẤT TRÁI PHIẾU CHÍNH PHỦ - VBMA31/7/202624/7/202631/7/2025
+ (3,500) (2,800) (2,100) (1,400) (700) - 700 1,400 2,100 2,800 3,5002/1/2616/1/2630/1/2613/2/2627/2/2613/3/2627/3/2610/4/2624/4/268/5/2622/5/265/6/2619/6/263/7/2617/7/2631/7/26GIAO DỊCH NĐT NN 2025 - 2026NN muaNN bánMua / bán ròng - 20 40 60 80 100 1202/1/2616/1/2630/1/2613/2/2627/2/2613/3/2627/3/2610/4/2624/4/268/5/2622/5/265/6/2619/6/263/7/2617/7/2631/7/26KHỐI LƯỢNG GD OUTRIGHT VÀ REPOOutrightRepo
+5
+
+Đơn vị: tỷ đồng
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18
+Thị trường trái phiếu doanh nghiệp
+Báo cáo tuần
+Trái phiếu doanh nghiệp phát hành trong tháng 7/2026:Theo dữ liệu VBMA tổng hợp từ HNX và SSC, tính đến ngày công bố thông tin 31/07/2026, có 20 đợt phát hành TPDN được ghi nhậntrong tháng 7 năm 2026. Với tổng khối lượng là 12,339 tỷ đồng đến từ các lĩnh vực bất động sản và ngân hàng.Lũy kế từ đầu năm 2026, tổng giá trị phát hành TPDN được ghi nhận là 289,911 tỷ đồng, với 180 đợt phát hành riêng lẻ trị giá 258,273tỷ đồng (chiếm 89.09% tổng giá trị phát hành), 26 đợt phát hành công chúng trị giá 31,638 tỷ đồng (chiếm 10.91% tổng số) và 1 đợtphát hành ra quốc tế.Trái phiếu doanh nghiệp được mua lại trong tháng 7/2026:Các doanh nghiệp đã mua lại 8,945 tỷ đồng trái phiếu trong tháng 7. Lũy kế từ đầu năm đến nay, tổng giá trị trái phiếu đã được mua lạitrước hạn đạt 172,054 tỷ đồng, tăng 12% so với năm 2025. Ngân hàng là nhóm ngành dẫn đầu, chiếm khoảng 87.5% tổng giá trị mualại trước hạn (tương ứng khoảng 149,043 tỷ đồng).*Dữ liệu VBMA tổng hợp được ghi nhận theo ngày phát hành và ngày thực hiện mua lại từ chuyên trang của HNX và có thể được thayđổi theo việc công bố thông tin trên chuyên trang của HNX. Dữ liệu trong báo cáo này được cập nhật đến hết ngày công bố thông tin31/07/2026. (Chi tiết trong Phụ lục 2)Trái phiếu doanh nghiệp đến hạn:Trong phần còn lại của năm 2026, tổng giá trị trái phiếu sẽ đến hạn là 106,155 tỷ đồng. 55.6% giá trị trái phiếu sắp đáo hạn thuộcnhóm Bất động sản với 59,621 tỷ đồng, theo sau là nhóm Ngân hàng với 20,756 tỷ đồng (chiếm 19.4%).Giao dịch TPDN phát hành riêng lẻ:Trong kỳ báo cáo, giá trị giao dịch TPDN riêng lẻ trung bình ngày đạt 6,894 tỷ đồng, giảm 7.52% so với tuần trước. Các tổ chức pháthành có trái phiếu được giao dịch nhiều nhất là CTCP Hàng không Vietjet (7,710 tỷ đồng), CTCP Vinhomes (5,215 tỷ đồng) và CTCP Tậpđoàn Trường Hải (2,561 tỷ đồng). Tính từ đầu năm đến nay, tổng giá trị giao dịch trái phiếu phát hành riêng lẻ đạt khoảng 911 nghìn tỷđồng.Kế hoạch phát hành TPDN năm 2026:CTCP Tập đoàn Đầu tư và Phát triển Công nghiệp BECAMEX (BCM)HĐQT CTCP Tập đoàn Đầu tư và Phát triển Công nghiệp BECAMEX (BCM) đã thông qua phương án phát hành trái phiếu riêng lẻ trong năm 2026 với tổng giá trị tối đa 500 tỷ đồng. Đây là trái phiếu không chuyển đổi, không kèm chứng quyền, có TSĐB và mệnh giá dự kiến 100 triệu đồng/trái phiếu. Trái phiếu có kỳ hạn 3 năm với mức lãi suất kết hợp giữa lãi suất cố định và lãi suất thả nổi.NHTMCP Sài Gòn - Hà NộiHĐQT NHTMCP Sài Gòn - Hà Nội đã thông qua phương án phát hành trái phiếu tăng vốn cấp 2 riêng lẻ trong năm 2026 với tổng giá trị tối đa 2,000 tỷ đồng. Đây là trái phiếu không chuyển đổi, không kèm chứng quyền, không TSĐB và mệnh giá dự kiến 1 tỷ đồng/trái phiếu. Trái phiếu có kỳ hạn 7 năm hoặc 8 năm với mức lãi suất kết hợp giữa lãi suất cố định và lãi suất thả nổi.45.9%44.6%5.7%1.9%1.1%GT PHÁT HÀNH THEO NHÓM NGÀNH 2026 (Lũy kế) Ngân hàngBất động sảnKhácXây dựngNông nghiệp, thủy sản289,911tỷ đồng - 10,000 20,000 30,000 40,000 50,000 60,000 70,0007/20258/20259/202510/202511/202512/20251/20262/20263/20264/20265/20266/20267/2026GT MUA LẠI TPDN 2025 - 2026
+6
+
+Nguồn: Trading Economics
+LỢI SUẤT TPCP KỲ HẠN 5 NĂM CỦA CÁC NƯỚC
+Đvị: %
+T7 2024 1.98
+T8 2024 1.96
+T9 2024 1.94
+T10 2024 1.92
+T11 2024 1.94
+T12 2024 2.15
+T1 2025 2.35
+T2 2025 2.40
+T3 2025 2.32
+T4 2025 2.38
+T5 2025 2.45
+T6 2025 2.58
+T7 2025 2.69
+T8 2025 2.85
+T9 2025 3.02
+T10 2025 3.13
+T11 2025 3.18
+T12 2025 3.22
+T1 2026 3.54
+T2 2026 3.72
+T3 2026 3.97
+T4 2026 4.06
+T5 2026 4.06
+T6 2026 4.13
+T7 2026 3.98
+Nguồn: VBMA, ThaiBMA, US Treasury, Investing.com LS tăng
+LS giảm
+1.43 1.91 3.42 7.36 1.72 4.21
+1.47 1.94 3.39 7.21 1.66 4.15
+3.912.245.60
+1.61
+1.63
+2.08 4.28
+0.821.79 3.57
+1.71
+1.54 3.27
+3.640.69
+3.62
+5.94
+1.01
+1.47
+1.40 0.85
+1.49
+3.62
+3.62
+1.95 0.60 3.62
+1.87
+2.25
+4.162.41
+3.511.76
+6.16
+2.30 3.71
+3.49
+3.50 6.02
+0.50 5.89
+0.48
+Báo cáo tuần
+Tin quốc tế
+07/08/2026 USD
+USD
+Ngày
+03/08/2026
+05/08/2026
+05/08/2026
+06/08/2026
+Ngoại Tệ
+USD
+USD
+USDMỹ
+Mỹ
+Mỹ Dự trữ dầu thô
+Đơn xin trợ cấp thất nghiệp lần đầu
+Tỷ lệ thất nghiệp tháng 7
+Nền kinh tế
+Việt NamPhilippines MỹTrung Quốc Nhật Bản Malaysia Thái Lan
+Mỹ
+Mỹ
+Sự kiện
+Chỉ số PMI sản xuất tháng 7
+Chỉ số PMI dịch vụ tháng 7
+0.73
+1.52 3.91
+4.07
+3.96
+1.54 5.95 1.05
+1.52 1.00 3.23
+3.16
+1.90 4.04
+5.99
+0.96
+5.79
+0.89
+5.86
+5.813.43
+1.65 1.12 3.56
+2.195.80
+5.82
+2.13
+4.23
+2.12 4.25
+4.46
+5.91 1.50
+1.62 1.17 3.15 5.83
+1.21 3.76
+1.37 3.95
+1.64
+3.38
+1.55 1.27 3.24
+1.61 1.63 3.28 5.71
+1.55
+3.70
+1.46 3.67
+3.78
+1.10 3.10 5.86
+3.231.22
+5.55
+1.52 4.00
+1.17 3.66
+1.67 6.30 1.52 3.84
+1.60 3.65 1.315.75
+3.29 5.56 1.29 3.691.56 1.66
+1.34
+1.61 1.46 3.28 5.65 1.33
+1.52 1.83 3.37 6.39 1.61 3.94
+1.52 1.81 3.37 6.52
+-2%0%2%4%6%8%10%6/238/2310/2312/232/244/246/248/2410/2412/242/254/256/258/2510/2512/252/264/266/26DIỄN BIẾN LẠM PHÁT CÁC NƯỚC TRONG KHU VỰCIndonesiaMalaysiaPhilippinesThailandVietnamSingapore
+7
+
+Kết quả đấu thầu TPCP (tuần 27/7 - 31/7/2026)
+STT Ngày TCPH GTGT GTĐT GTTT LSTT (%) Thay đổi (đcb)
+1 TD2629001 29/7/2026 500 500 0 - 0
+2 TD2631010 29/7/2026 4,000 6,850 3,550 4.2 2
+3 TD2636024 29/7/2026 7,000 7,500 3,050 4.36 1
+4 TD2641037 29/7/2026 1,000 530 0 - 0
+5 TD2656067 29/7/2026 500 0 0 - 0
+Kế hoạch đấu thầu từ 3/8 - 7/8/2026
+STT Giá trị (tỷ)
+1 500
+2 4,000
+3 7,000
+4 1,000
+5 500
+Kế hoạch phát hành Trái phiếu Chính phủ Q2/2026
+STT
+1 18%
+2
+3
+4
+5
+6
+7
+Top 10 mã trái phiếu có GTGD outright lớn nhất trong tuần
+STT
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+20 năm
+TD2151042
+Tổng mức phát hành
+30 năm
+Mã TP Kỳ hạn (năm)
+KBNN
+5 năm
+5/8/2026
+10
+15
+30
+Bổ sung
+Bổ sung
+Bổ sung
+Bổ sung
+3
+5
+Bổ sung
+Báo cáo tuần
+Phụ lục 1
+5/8/2026
+5/8/2026
+TCPH Kì hạn (năm)
+Ngày
+Mã TP
+KBNN
+KBNN
+KBNN
+Đơn vị: Tỷ đồng
+3
+5
+30
+KBNN 10
+KBNN 15
+5/8/2026
+15 năm
+7 năm
+Kỳ hạn Kế hoạch (tỷ đồng)
+TCPH
+KBNN
+KBNN
+KBNN
+KBNN
+TD2629001
+TD2631010
+TD2636024
+TD2641037
+TD2656067
+Kiểu phát hành
+2,000
+5/8/2026
+Tỷ lệ hoàn thành
+110,000
+#VALUE!
+Kì hạn còn lại (năm)
+#VALUE!
+Kì hạn gốc (năm)
+10
+30
+30
+30
+11%
+0%
+24%
+93.1%
+2,960
+355
+1,575
+0
+485
+102,460
+20,000
+2,000
+3.1619 - 3.7322
+4.4366 - 4.4452
+4.441 - 4.87
+4.41 - 4.4132
+2.7 - 3.1701
+TD2434026
+10
+3 năm
+Thực hiện (tỷ đồng)
+10 năm
+8.1
+#VALUE!
+8.5
+#VALUE!
+#VALUE!
+#VALUE!
+14,000
+2,000
+2,000
+10
+10
+30
+30
+30
+TD1646468
+TD2252132
+1,937
+1,918
+TD2050035
+TD2535023
+2,397
+2,338
+2,300
+2,146
+2,066
+2,129
+TD1747410
+TL1545363
+TD2131012
+TD2434024
+73,430
+133.1%
+0%
+108%
+LS Giao dịch (%)
+3.17 - 3.1801
+#VALUE!
+7.9
+4.5373 - 4.8
+4.467 - 4.4686
+4.8 - 4.8
+3.9924 - 4.1078
+5,146
+26,615
+0
+68,000
+Mã TP GTGD (tỷ)
+8
+
+Trái phiếu doanh nghiệp phát hành trong tháng 7
+TÊN DOANH NGHIỆP NHÓM 
+NGÀNH
+GTPH (TỶ 
+ĐỒNG)
+MÃ TRÁI 
+PHIẾU
+CÁCH THỨC 
+PHÁT HÀNH LÃI SUẤT (%/NĂM) NGÀY PHÁT 
+HÀNH
+KỲ HẠN 
+(NĂM)
+CTCP TRANSIMEX LOGISTICS CÔNG NGHIỆP 100 TOT12601 RIÊNG LẺ 9.5%/NĂM 3/7/2026 3
+NHTMCP PHÁT TRIỂN THÀNH PHỐ HỒ 
+CHÍ MINH NGÂN HÀNG 1000 HDB12608 RIÊNG LẺ LSTC + 2.6%/NĂM; TRƯỜNG HỢP KHÔNG MUA 
+LẠI: + 3.1%/NĂM (02 NĂM CUỐI) 10/7/2026 7
+NHTMCP PHÁT TRIỂN THÀNH PHỐ HỒ 
+CHÍ MINH NGÂN HÀNG 500 HDB12607 RIÊNG LẺ 9.0%/NĂM 9/7/2026 6
+NHTMCP PHÁT TRIỂN THÀNH PHỐ HỒ 
+CHÍ MINH NGÂN HÀNG 200 HDB12606 RIÊNG LẺ LSTC + 2.70%/NĂM 7/7/2026 6
+NHTMCP NGOẠI THƯƠNG VIỆT NAM NGÂN HÀNG 100VCB12603 RIÊNG LẺ 7.9%/NĂM 6/7/2026 10
+CTCP VINHOMES BẤT ĐỘNG SẢN 1000 VHM12614 RIÊNG LẺ 02 KỲ ĐẦU: 12.5%/NĂM  CÁC KỲ SAU: LSTC + 
+2.0%/NĂM (TỐI THIỂU 12.5%/NĂM)10/7/2026 3
+CTCP VINHOMES BẤT ĐỘNG SẢN 2000 VHM12613 RIÊNG LẺ 02 KỲ ĐẦU: 12.5%/NĂM  CÁC KỲ SAU: LSTC + 
+2.0%/NĂM (TỐI THIỂU 12.5%/NĂM)10/7/2026 3
+CTCP DỊCH VỤ CÁP TREO BÀ NÀ CÔNG NGHIỆP 420 BNC12601 RIÊNG LẺ
+04 KỲ ĐẦU: 11.5%/NĂM  CÁC KỲ SAU: BQLSTKCN 
+12T VNĐ (CTG, VCB, AGRIBANK, BIDV) + 
+4.5%/NĂM (TỐI THIỂU 10.5%/NĂM)
+17/7/2026 5
+CTCP CHỨNG KHOÁN SÀI GÒN - HÀ NỘI CHỨNG KHOÁN 119SHS12601 RIÊNG LẺ 10.5%/NĂM 15/7/2026 1
+NHTMCP BẮC Á NGÂN HÀNG 500 BAB12607 RIÊNG LẺ 9%/NĂM 15/7/2026 3
+NHTMCP VIỆT NAM THỊNH VƯỢNG NGÂN HÀNG 1000VPB12605 RIÊNG LẺ 9%/NĂM 16/7/2026 3
+CT TNHH XÂY DỰNG HẠ TẦNG CRYSTAL BẤT ĐỘNG SẢN 2000CIC12601 RIÊNG LẺ
+02 KỲ ĐẦU: 12.5%/NĂM  CÁC KỲ SAU: BQLSTKCN 
+12T VNĐ (BIDV, VCB, CTG, KLB) + 4%/NĂM (TỐI 
+THIỂU 12.5%/NĂM)
+16/7/2026 5
+NHTMCP QUÂN ĐỘI NGÂN HÀNG 400 MBB12619 RIÊNG LẺ 8.2%/NĂM 27/7/2026 5
+NHTMCP PHÁT TRIỂN THÀNH PHỐ HỒ 
+CHÍ MINH NGÂN HÀNG 100 HDB12609 RIÊNG LẺ 8.3%/NĂM 28/7/2026 5
+Báo cáo tuần
+Phụ lục 2
+9
+
+Trái phiếu doanh nghiệp phát hành trong tháng 7
+TÊN DOANH NGHIỆP NHÓM 
+NGÀNH
+GTPH (TỶ 
+ĐỒNG)
+MÃ TRÁI 
+PHIẾU
+CÁCH THỨC 
+PHÁT HÀNH LÃI SUẤT (%/NĂM) NGÀY PHÁT 
+HÀNH
+KỲ HẠN 
+(NĂM)
+NHTMCP ĐẦU TƯ VÀ PHÁT TRIỂN VIỆT 
+NAM NGÂN HÀNG 200 BID12611 RIÊNG LẺ
+BQLSTKCN 24T VNĐ (AGRIBANK, CTG, VCB, BIDV) 
++ 2.2%/NĂM; TRƯỜNG HỢP KHÔNG MUA LẠI: + 
+7.2%/NĂM (TỪ KỲ THỨ 06)
+20/7/2026 6
+NHTMCP TIÊN PHONG NGÂN HÀNG 200 TPB12605 RIÊNG LẺ BQLSTKCN 12T VNĐ (BIDV, VCB, CTG, AGRIBANK) 
++ 2.95%/NĂM 21/7/2026 10
+NHTMCP ĐẦU TƯ VÀ PHÁT TRIỂN VIỆT 
+NAM NGÂN HÀNG 2000 BID12610 RIÊNG LẺ
+BQLSTKCN 12T VNĐ (AGRIBANK, CTG, VCB, BIDV) 
++ 2.35%/NĂM; TRƯỜNG HỢP KHÔNG MUA LẠI: + 
+7.35%/NĂM (TỪ KỲ THỨ 06)
+17/7/2026 6
+NHTMCP NGOẠI THƯƠNG VIỆT NAM NGÂN HÀNG 500 VCB12604 RIÊNG LẺ
+BQLSTKCN 12T VNĐ (VCB, BIDV, CTG, AGRIBANK) 
++ 1.97%/NĂM; TRƯỜNG HỢP KHÔNG MUA LẠI: + 
+2.6%/NĂM (TỪ NĂM THỨ 06)
+17/7/2026 7
+NHTMCP PHÁT TRIỂN THÀNH PHỐ HỒ 
+CHÍ MINH NGÂN HÀNG 2718 HD8C7Y263302CÔNG CHÚNGBQLSTKCN 12T VNĐ (CTG, BIDV, VCB, AGRIBANK) 
++ 2,80%/NĂM 24/7/2026 7
+NHTMCP PHÁT TRIỂN THÀNH PHỐ HỒ 
+CHÍ MINH NGÂN HÀNG 2588 HDBC8Y263402CÔNG CHÚNGBQLSTKCN 12T VNĐ (CTG, BIDV, VCB, AGRIBANK) 
++ 2,90%/NĂM 24/7/2026 8
+Báo cáo tuần
+Phụ lục 2
+10
+
+Trái phiếu doanh nghiệp đến hạn trong tuần (3/8 - 9/8/2026)
+Báo cáo tuần
+Phụ lục 3
+ (5,000) - 5,000 10,000 15,000 20,000 25,000T7/26 T8/26 T9/26 T10/26 T11/26 T12/26Giá trị TPDN đáo hạn 2026BĐSNgân hàngKhác
+11
+
+Công bố thông tin bất thường về Trái phiếu doanh nghiệp trong tuần (27/7 - 31/7/2026)
+Tổng GTGD trái phiếu doanh nghiệp riêng lẻ 
+* Dữ liệu VBMA tổng hợp được ghi nhận theo ngày công bố thông tin từ HNX, tính đến ngày 31/7/2026
+Phụ lục 4
+Báo cáo tuần
+010,00020,00030,00040,00050,00060,00012/5 - 16/519/5 - 23/526/5 - 30/502/6 - 06/609/6 - 13/616/6 - 20/623/6 - 27/630/6 - 04/707/7 - 11/714/7 - 18/721/7 - 25/728/7 - 01/804/8 - 08/811/8 - 15/818/8 - 22/825/8 - 29/801/9 - 05/908/9 - 12/915/9 - 19/922/9 - 26/929/9 - 03/1006/10 - 10/1013/10 - 17/1020/10 - 24/1027/10 - 31/1003/11 - 07/1110/11 - 14/1117/11 - 21/1124/11 - 28/1101/12 - 05/1208/12 - 12/1215/12 - 19/1222/12 - 26/1205/1 - 09/112/1 - 16/119/1 - 23/126/1 - 30/102/2 - 06/209/2 - 13/223/2 - 27/202/3 - 06/309/3 - 13/316/3 - 20/323/3 - 27/330/3 - 03/406/4 - 10/413/4 - 17/420/4 - 24/427/4 - 01/504/5 - 08/511/5 - 15/518/5 - 22/525/5 - 29/501/6 - 05/608/6 - 12/615/6 - 19/622/6 - 26/629/6 - 03/706/7 - 10/713/7 - 17/720/7 - 24/727/7 - 31/7Giá trị giao dịch TPDN riêng lẻ năm 2025 - 2026 theo tuần (tỷ VND) 
+12
+
+Danh mục các từ viết tắt
+Báo cáo tuần
+Phụ lục 5
+STT Từ viết tắt Ý nghĩa1 1W 1 tuần2 BĐS Bất động sản3 CNY Đồng nhân dân tệ Trung Quốc4 CPI Chỉ số giá tiêu dùng5 CT TNHH Công ty Trách nhiệm hữu hạn6 CTCP Công ty Cổ phần7 đcb điểm cơ bản8 DNPH Doanh nghiệp phát hành9 Fed Cục Dự trữ Liên bang10 FOMC Ủy ban Thị trường mở Liên bang11 GBP Đồng bảng Anh12 GT Giá trị13 GTĐT Giá trị đặt thầu14 GTGD Giá trị giao dịch15 GTGT Giá trị gọi thầu16 GTTT Giá trị trúng thầu17 HĐQT Hội đồng quản trị18 HNX Sở giao dịch chứng khoán Hà Nội19 JPY đồng Yên Nhật Bản20 KBNN Kho bạc nhà nước21 KH Kế hoạch22 LS Lãi suất23 LS Giao dịch Lãi suất giao dịch24 LSTC Lãi suất tham chiếu25 LSTK Lãi suất tiết kiệm26 LSTT Lãi suất trúng thầu27 Mã TP Mã trái phiếu28 NĐTNN Nhà đầu tư nước ngoài29 NHNN Ngân hàng nhà nước30 NHTM Ngân hàng thương mại31 NHTMCP Ngân hàng Thương mại Cổ phần32 NN Nước ngoài33 OMO Nghiệp vụ thị trường mở34 ON qua đêm44 PPI Chỉ số giá sản xuất35 RHS trục phải36 SSC Ủy ban Chứng khoán Nhà nước37 TBN Trung bình ngày38 TCPH Tổ chức phát hành39 TPCP Trái phiếu chính phủ40 TPDN Trái phiếu doanh nghiệp41 TSĐB Tài sản đảm bảo42 VBMA Hiệp hội Thị trường Trái Phiếu Việt Nam43 VND Vietnam Dong
+13
+
+14

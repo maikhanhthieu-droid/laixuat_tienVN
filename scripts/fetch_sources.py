@@ -159,11 +159,31 @@ def download_pdf(
 
 
 def pdftotext(pdf_path: Path, txt_path: Path) -> None:
-    """Convert PDF to text via system pdftotext -layout."""
-    subprocess.run(
-        ["pdftotext", "-layout", str(pdf_path), str(txt_path)],
-        check=True, capture_output=True,
-    )
+    """Convert PDF to text via system pdftotext -layout, with fallback to pypdf."""
+    import shutil
+    if shutil.which("pdftotext"):
+        try:
+            subprocess.run(
+                ["pdftotext", "-layout", str(pdf_path), str(txt_path)],
+                check=True, capture_output=True,
+            )
+            if txt_path.exists() and txt_path.stat().st_size > 0:
+                return
+        except Exception:
+            pass
+
+    # Fallback: pypdf Python library
+    try:
+        import pypdf
+        reader = pypdf.PdfReader(str(pdf_path))
+        extracted = []
+        for p in reader.pages:
+            t = p.extract_text()
+            if t:
+                extracted.append(t)
+        txt_path.write_text("\n\n".join(extracted), encoding="utf-8", errors="replace")
+    except Exception as exc:
+        raise RuntimeError(f"Cannot extract text from {pdf_path}: {exc}") from exc
 
 
 def sbv_pdf_filename_candidates(week: WeekRange) -> list[str]:
@@ -321,6 +341,7 @@ def fetch_vbma_by_weeks(out_dir: Path, target_weeks: list) -> dict:
     """Fetch VBMA PDFs for specific ISO weeks by scanning listing pages."""
     from datetime import date as _date
     import time as _time
+    import urllib.parse as _parse
 
     results = {}
     remaining = list(target_weeks)
@@ -341,52 +362,88 @@ def fetch_vbma_by_weeks(out_dir: Path, target_weeks: list) -> dict:
 
     # Scan listing pages to collect PDF hrefs
     all_hrefs = []
+    vbma_headers = {
+        "User-Agent": USER_AGENT,
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Referer": "https://vbma.org.vn/vi/reports/weekly",
+    }
     for page in range(1, 6):
         try:
-            html = curl(f"https://vbma.org.vn/vi/reports/weekly?page={page}").decode("utf-8", errors="ignore")
-            hrefs = re.findall(r'href="(/storage/reports/[^"]+\.pdf)"', html)
+            html = curl(f"https://vbma.org.vn/vi/reports/weekly?page={page}", headers=vbma_headers).decode("utf-8", errors="ignore")
+            hrefs = re.findall(r'href=[\x22\x27](/storage/reports/[^\x22\x27]+\.pdf)[\x22\x27]', html)
             all_hrefs.extend(hrefs)
             if len(hrefs) < 12:
                 break
             _time.sleep(0.5)
-        except Exception:
+        except Exception as exc:
+            print(f"  ⚠️ VBMA page {page} error: {exc}")
             break
 
     # Download + match by date
     for href in all_hrefs:
         if not remaining:
             break
-        pdf_url = "https://vbma.org.vn" + href.replace(" ", "%20")
+        fn_match = re.search(r"(\d{2})(\d{2})(\d{4})\s*-\s*(\d{2})(\d{2})(\d{4})", href)
+        target_tw_key = None
+        if fn_match:
+            d2, m2, y2 = int(fn_match.group(4)), int(fn_match.group(5)), int(fn_match.group(6))
+            try:
+                dt_friday = _date(y2, m2, d2)
+                iso = dt_friday.isocalendar()
+                cand_key = f"{iso[0]}-W{iso[1]:02d}"
+                if cand_key in remaining:
+                    target_tw_key = cand_key
+                else:
+                    continue
+            except ValueError:
+                pass
+
+        pdf_url = "https://vbma.org.vn" + _parse.quote(href, safe="/:")
         tmp_pdf = out_dir / f"vbma_tmp_{len(results)}.pdf"
         tmp_txt = out_dir / f"vbma_tmp_{len(results)}.txt"
         try:
-            tmp_pdf.write_bytes(download_pdf(pdf_url))
+            tmp_pdf.write_bytes(download_pdf(pdf_url, headers=vbma_headers))
             pdftotext(tmp_pdf, tmp_txt)
             text = tmp_txt.read_text(encoding="utf-8", errors="ignore")
-            dates_found = re.findall(r"(\d{1,2})/(\d{1,2})/(\d{4})", text[:3000])
+
             matched = False
-            for d_str, m_str, y_str in dates_found[:5]:
-                try:
-                    d_val = _date(int(y_str), int(m_str), int(d_str))
-                    iso = d_val.isocalendar()
-                    tw_key = f"{iso[0]}-W{iso[1]:02d}"
-                    if tw_key in remaining:
-                        w_short = tw_key.split("-")[-1]
-                        final_txt = out_dir / f"vbma_{w_short}.txt"
-                        final_pdf = out_dir / f"vbma_{w_short}.pdf"
-                        tmp_txt.rename(final_txt)
-                        tmp_pdf.rename(final_pdf)
-                        results[w_short] = final_txt
-                        remaining.remove(tw_key)
-                        print(f"    {w_short}: matched ({d_val})")
-                        matched = True
-                        break
-                except ValueError:
-                    continue
+            if target_tw_key:
+                w_short = target_tw_key.split("-")[-1]
+                final_txt = out_dir / f"vbma_{w_short}.txt"
+                final_pdf = out_dir / f"vbma_{w_short}.pdf"
+                tmp_txt.rename(final_txt)
+                tmp_pdf.rename(final_pdf)
+                results[w_short] = final_txt
+                remaining.remove(target_tw_key)
+                print(f"    {w_short}: matched from filename ({d2:02d}/{m2:02d}/{y2})")
+                matched = True
+            else:
+                dates_found = re.findall(r"(\d{1,2})/(\d{1,2})/(\d{4})", text[:3000])
+                for d_str, m_str, y_str in dates_found[:5]:
+                    try:
+                        d_val = _date(int(y_str), int(m_str), int(d_str))
+                        iso = d_val.isocalendar()
+                        tw_key = f"{iso[0]}-W{iso[1]:02d}"
+                        if tw_key in remaining:
+                            w_short = tw_key.split("-")[-1]
+                            final_txt = out_dir / f"vbma_{w_short}.txt"
+                            final_pdf = out_dir / f"vbma_{w_short}.pdf"
+                            tmp_txt.rename(final_txt)
+                            tmp_pdf.rename(final_pdf)
+                            results[w_short] = final_txt
+                            remaining.remove(tw_key)
+                            print(f"    {w_short}: matched ({d_val})")
+                            matched = True
+                            break
+                    except ValueError:
+                        continue
+
             if not matched:
                 tmp_pdf.unlink(missing_ok=True)
                 tmp_txt.unlink(missing_ok=True)
-        except Exception:
+        except Exception as exc:
+            print(f"    ⚠️ Error processing {href}: {exc}")
             tmp_pdf.unlink(missing_ok=True)
             tmp_txt.unlink(missing_ok=True)
 

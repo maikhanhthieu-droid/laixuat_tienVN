@@ -108,19 +108,22 @@ def parse_sbv_fx(text: str) -> dict:
 def parse_vbma_yield_table(text: str) -> dict:
     """Re-parse VBMA yield table — ĐỘC LẬP với extract_cards.parse_vbma_yields.
 
-    Pattern: dòng 'DD/M/YYYY  3.38%  3.48%  ... 4.69%' (date + 9 percentages).
+    Supports rows with 6 to 10 tenor columns, e.g.:
+      "16/10/2026 3.54% 3.64% 3.72% 4.28% 4.34% 4.46% 4.57% 4.67%" (8 columns)
+      "26/6/2026  3.38%  3.48%  3.56%  4.19%  4.25%  4.40%  4.57%  4.62%  4.69%" (9 columns)
     Map cột [2N=idx1, 5N=idx3, 10N=idx5].
     """
     row_re = re.compile(
         r"^(\d{1,2}/\d{1,2}/\d{4})\s+"
-        + r"\s+".join([r"(\d{1,2}\.\d{2,4})%"] * 9)
-        + r"\s*$",
+        + r"((?:(?:\d{1,2}\.\d{2,4})%\s*){6,10})",
         re.MULTILINE,
     )
     m = row_re.search(text)
     if not m:
         return {}
-    cols = [float(m.group(2 + i)) for i in range(9)]
+    cols = [float(v) for v in re.findall(r"(\d{1,2}\.\d{2,4})%", m.group(2))]
+    if len(cols) < 6:
+        return {}
     # Tenor order: 1N 2N 3N 5N 7N 10N 15N 20N 30N
     # index:       0   1   2   3   4    5    6    7    8
     return {
@@ -433,6 +436,8 @@ def verify_report_v2(report_path: Path, cache_dir: Path, strict: bool = False) -
         for tenor in VBMA_TENOR_COLS:
             truth = table_9.get(tenor)
             reported = curve_w26.get(tenor)
+            if truth is None:
+                continue
             results.append(_make_result(
                 f"curve_{tenor}",
                 latest_week_short,

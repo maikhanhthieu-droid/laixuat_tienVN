@@ -86,13 +86,22 @@ def check_deps(publish_telegram: bool = False, skip_fetch: bool = False) -> bool
     node_path = shutil.which("node")
     fred_key = os.environ.get("FRED_API_KEY")
 
+    has_pypdf = False
+    try:
+        import pypdf
+        has_pypdf = True
+    except ImportError:
+        pass
+
     all_ok = True
     if pdftotext_path:
         print(f"  ✅ pdftotext: {pdftotext_path}")
+    elif has_pypdf:
+        print("  ✅ pdftotext: NOT FOUND, using pypdf fallback")
     elif skip_fetch:
         print("  ⚠️ pdftotext: NOT FOUND (skipped because --skip-fetch is enabled)")
     else:
-        print("  ❌ pdftotext: NOT FOUND (required to convert fetched PDFs to text)")
+        print("  ❌ pdftotext: NOT FOUND and pypdf not installed (required to convert PDFs to text)")
         all_ok = False
 
     if node_path:
@@ -142,14 +151,20 @@ def preflight(week: str) -> bool:
     print(f"  Target week: {week} (Friday {friday})")
     print(f"  4-week window: {weeks}")
 
-    # Quick connectivity check (SBV)
+    # Quick connectivity check (VBMA)
     try:
         import urllib.request
         ssl_ctx = __import__("ssl").create_default_context()
         ssl_ctx.check_hostname = False
         ssl_ctx.verify_mode = __import__("ssl").CERT_NONE
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7",
+            "Referer": "https://vbma.org.vn/vi/reports/weekly",
+        }
         req = urllib.request.Request("https://vbma.org.vn/vi/reports/weekly?page=1",
-                                     headers={"User-Agent": "Mozilla/5.0"})
+                                     headers=headers)
         urllib.request.urlopen(req, timeout=10, context=ssl_ctx)
         print("  ✅ VBMA reachable")
     except Exception as e:
@@ -239,6 +254,17 @@ def fetch_pdfs(week: str, cache_dir: Path) -> bool:
             print(f"\n  → VNBA {len(missing_vnba)} week(s)...")
             from fetch_sources import fetch_vnba_by_weeks
             fetch_vnba_by_weeks(cache_dir, missing_vnba)
+
+    # Fallback to repo cache if available for any still missing sources
+    if repo_cache_dir.exists():
+        for w in target_weeks:
+            w_short = w.split("-")[-1]
+            for fname in [f"sbv_{w}.txt", f"vbma_{w_short}.txt", f"vnba_{w_short}.txt"]:
+                src = repo_cache_dir / fname
+                dst = cache_dir / fname
+                if src.exists() and not dst.exists():
+                    shutil.copy2(src, dst)
+                    print(f"  📦 Restored {fname} from repo cache fallback")
 
     # SBV and VBMA are required for the verified rate series. VNBA is an
     # optional context source, but publishing without the primary rate files

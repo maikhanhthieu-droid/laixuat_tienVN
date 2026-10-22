@@ -33,25 +33,26 @@ VBMA_FIELD_TO_COL = {"yield_2y": "2N", "yield_5y": "5N", "yield_10y": "10N"}
 def _find_vbma_yield_table(text: str) -> tuple[Optional[str], dict[str, float]]:
     """Locate the VBMA yield table and return (latest_date, {tenor: value}).
 
-    The data row format (confirmed from 2026-W26 fixture):
-      "26/6/2026  3.38%  3.48%  3.56%  4.19%  4.25%  4.40%  4.57%  4.62%  4.69%"
-    i.e. a date followed by exactly 9 percent values, matching the 9 tenor columns.
+    Supports rows with 6 to 10 tenor columns, e.g.:
+      "16/10/2026 3.54% 3.64% 3.72% 4.28% 4.34% 4.46% 4.57% 4.67%" (8 columns)
+      "26/6/2026  3.38%  3.48%  3.56%  4.19%  4.25%  4.40%  4.57%  4.62%  4.69%" (9 columns)
     The FIRST such row in the document is the latest week (top-down chronology).
     """
-    # Match: date + exactly 9 percentage values on one line
     row_re = re.compile(
         r"^(\d{1,2}/\d{1,2}/\d{4})\s+"
-        + r"\s+".join([r"(\d{1,2}\.\d{2,4})%"] * 9)
-        + r"\s*$",
+        + r"((?:(?:\d{1,2}\.\d{2,4})%\s*){6,10})",
         re.MULTILINE,
     )
     m = row_re.search(text)
     if not m:
         return None, {}
     date_label = m.group(1)
+    pct_matches = re.findall(r"(\d{1,2}\.\d{2,4})%", m.group(2))
+    cols = [float(v) for v in pct_matches]
     values = {}
     for i, tenor in enumerate(VBMA_TENOR_COLS):
-        values[tenor] = float(m.group(2 + i))
+        if i < len(cols):
+            values[tenor] = cols[i]
     return date_label, values
 
 
@@ -410,17 +411,20 @@ def parse_vbma_full(text: str) -> ParsedVBMAFull:
     """Parse VBMA weekly report for ALL must-have indicators (Phase 1)."""
     r = ParsedVBMAFull()
 
-    # 1. Yield curve 9 tenors (latest row: "26/6/2026  3.38%  3.48% ... 4.69%")
+    # 1. Yield curve (supports 6 to 10 tenors, e.g. 8 cols or 9 cols)
     row_re = re.compile(
         r"^(\d{1,2}/\d{1,2}/\d{4})\s+"
-        + r"\s+".join([r"(\d{1,2}\.\d{2,4})%"] * 9)
-        + r"\s*$", re.MULTILINE,
+        + r"((?:(?:\d{1,2}\.\d{2,4})%\s*){6,10})",
+        re.MULTILINE,
     )
     m = row_re.search(text)
     if m:
+        pct_matches = re.findall(r"(\d{1,2}\.\d{2,4})%", m.group(2))
+        cols = [float(v) for v in pct_matches]
         tenors = ["1N", "2N", "3N", "5N", "7N", "10N", "15N", "20N", "30N"]
         for i, t in enumerate(tenors):
-            r.yields[t] = float(m.group(2 + i))
+            if i < len(cols):
+                r.yields[t] = cols[i]
         # WoW row (next: "WoW (đcb)  1.14  1.36 ...")
         after = text[m.end():m.end() + 1500]
         wow_re = re.compile(r"WoW[^0-9-]*([-\d.,\s]+)", re.I)
@@ -437,19 +441,24 @@ def parse_vbma_full(text: str) -> ParsedVBMAFull:
                 if i < len(bp_vals):
                     r.yields_wow_bp[t] = bp_vals[i]
 
-    # 2. Interbank 7 tenors (L113-120) — "ON  4.25  2.91  4.41  -150  -477"
+    # 2. Interbank 7 tenors — supports 3, 4, or 5 values
     ib_re = re.compile(
-        r"^\s*(ON|1W|2W|1M|3M|6M|9M)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(-?\d+)\s+(-?\d+)",
+        r"^\s*(ON|1W|2W|1M|3M|6M|9M)\s+(\d+\.\d+)\s+(\d+\.\d+)(?:\s+(\d+\.\d+))?(?:\s+(-?\d+))?(?:\s+(-?\d+))?",
         re.MULTILINE,
     )
     for im in ib_re.finditer(text):
         tenor = im.group(1)
+        tb5 = float(im.group(2))
+        close = float(im.group(3))
+        prev_close = float(im.group(4)) if im.group(4) else close
+        wow_bp = float(im.group(5)) if im.group(5) else 0.0
+        mom_bp = float(im.group(6)) if im.group(6) else 0.0
         r.interbank[tenor] = {
-            "tb5": float(im.group(2)),
-            "close": float(im.group(3)),
-            "prev_close": float(im.group(4)),
-            "wow_bp": float(im.group(5)),
-            "mom_bp": float(im.group(6)),
+            "tb5": tb5,
+            "close": close,
+            "prev_close": prev_close,
+            "wow_bp": wow_bp,
+            "mom_bp": mom_bp,
         }
 
     # 3. Auction 5 tenors (L246-251) — "1  24/6/2026  KBNN  TD2629001  3  500  625  125  3.52  0"

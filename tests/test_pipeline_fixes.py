@@ -256,3 +256,28 @@ def test_check_deps_allows_skip_fetch_without_pdftotext():
     from run_pipeline import check_deps
     # With skip_fetch=True and publish_telegram=False, missing pdftotext or node should not fail
     assert check_deps(publish_telegram=False, skip_fetch=True) is True
+
+
+def test_vbma_8_columns_parsing():
+    from extract_cards import _find_vbma_yield_table, parse_vbma_yields
+    from verify_data import parse_vbma_yield_table
+
+    sample_8col = "16/10/2026 3.54% 3.64% 3.72% 4.28% 4.34% 4.46% 4.57% 4.67%\n"
+    date_lbl, tbl = _find_vbma_yield_table(sample_8col)
+    assert date_lbl == "16/10/2026"
+    assert tbl["1N"] == 3.54
+    assert tbl["2N"] == 3.64
+    assert tbl["5N"] == 4.28
+    assert tbl["10N"] == 4.46
+
+    parsed_yield = parse_vbma_yields(sample_8col)
+    assert parsed_yield.yield_2y == 3.64
+    assert parsed_yield.yield_5y == 4.28
+    assert parsed_yield.yield_10y == 4.46
+
+    v_tbl = parse_vbma_yield_table(sample_8col)
+    assert v_tbl["date_label"] == "16/10/2026"
+    assert v_tbl["yield_2y"] == 3.64
+    assert v_tbl["yield_5y"] == 4.28
+    assert v_tbl["yield_10y"] == 4.46
+

@@ -1,7 +1,9 @@
 __pycache__/
 *.pyc
 .pytest_cache/
-sources_cache/
+/sources_cache/
+!data/sources_cache/
+!data/sources_cache/*.txt
 *.pdf
 output/
 tmp/
